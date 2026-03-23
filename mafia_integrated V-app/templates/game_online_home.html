@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>온라인 마피아</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;font-family:sans-serif;color:white;
+  background:linear-gradient(135deg,#1a0000 0%,#2e0a0a 50%,#1a0a0a 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+h1{font-size:40px;margin-bottom:10px;}
+.subtitle{font-size:15px;color:#aaa;margin-bottom:40px;}
+.btn-grid{display:flex;flex-direction:column;gap:15px;width:300px;}
+.btn{
+  padding:20px; font-size:18px; border:none; border-radius:14px;
+  cursor:pointer; transition:all 0.3s; font-weight:bold;
+  background:rgba(255,255,255,0.08); color:white;
+  border:1px solid rgba(255,255,255,0.15);
+}
+.btn:hover{background:rgba(255,255,255,0.18);transform:translateY(-2px);}
+.btn.red{border-color:rgba(255,80,80,0.4);}
+.btn.red:hover{border-color:rgba(255,80,80,0.9);box-shadow:0 0 20px rgba(255,80,80,0.2);}
+.back{margin-top:30px;font-size:14px;color:#888;cursor:pointer;text-decoration:underline;}
+</style>
+</head>
+<body>
+{{ top_bar|safe }}
+<h1>🌐 온라인 모드</h1>
+<p class="subtitle">각자 기기로 접속해서 플레이하세요</p>
+<div class="btn-grid">
+  <button class="btn red" onclick="location.href='/game/create_code'">🔑 초대코드 만들기</button>
+  <button class="btn" onclick="location.href='/game/join_code'">🎟 초대코드로 참여</button>
+  <button class="btn red" onclick="location.href='/game/create_server'">🖥 서버 만들기</button>
+  <button class="btn" onclick="location.href='/game/online_join'">📋 서버 목록</button>
+</div>
+<p class="back" onclick="location.href='/game'">← 메인으로</p>
+</body>
+</html>
