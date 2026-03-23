@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}회사 정보 - Mafia GO!{% endblock %}
+{% block content %}
+<div class="page-header"><h1>회사 정보</h1><p>유니버스 기본 정보 안내</p></div>
+<nav class="sub-nav">
+    <a href="{{ url_for('greeting') }}">경영진 인사말</a>
+    <a href="{{ url_for('principles') }}">운영 원칙</a>
+    <a href="{{ url_for('company_info') }}" class="active">회사 정보</a>
+</nav>
+<div class="content-page fade-up">
+    <div class="privacy-box">
+        <h2>기본 정보</h2>
+        <ul>
+            <li><strong>회사명:</strong> 유니버스 (Universe)</li>
+            <li><strong>서비스명:</strong> Mafia GO!</li>
+            <li><strong>설립일:</strong> 2024년 1월 1일</li>
+            <li><strong>사업 분야:</strong> 인터넷 서비스, 플랫폼</li>
+        </ul>
+        <h2>연락처</h2>
+        <ul>
+            <li><strong>이메일:</strong> contact@mafiagо.universe.kr</li>
+            <li><strong>운영시간:</strong> 평일 09:00 ~ 18:00 (주말·공휴일 제외)</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
