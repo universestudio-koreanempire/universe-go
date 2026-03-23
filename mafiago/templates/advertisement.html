@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Advertisement for Reward - {{ site_name }}{% endblock %}
+{% block content %}
+
+<div class="page-hdr" style="background: linear-gradient(135deg, #3db345, #1a9cb0);">
+    <h1>🎁 Advertisement for Reward</h1>
+    <p>광고를 시청하고 리워드 포인트를 받으세요!</p>
+</div>
+
+<div class="content-wrap">
+
+    <!-- 포인트 현황 -->
+    {% if session.get('user') %}
+    <div style="background: white; border-radius: 16px; padding: 28px; margin-bottom: 32px; box-shadow: 0 2px 14px rgba(0,0,0,0.07); display: flex; align-items: center; gap: 20px;">
+        <div style="font-size: 2.5rem;">👤</div>
+        <div>
+            <p style="font-size: .85rem; color: #999; margin-bottom: 4px;">{{ session['user'] }}님의 누적 리워드</p>
+            <p style="font-family: var(--font-display); font-size: 2rem; color: var(--green-primary);">
+                {{ reward_history | sum(attribute='amount') }} <span style="font-size: 1rem; color: #aaa;">포인트</span>
+            </p>
+        </div>
+    </div>
+    {% else %}
+    <div style="background: #fff8e1; border-radius: 12px; padding: 18px 24px; margin-bottom: 28px; border-left: 4px solid #f0b429; font-size: .9rem; color: #7a6000;">
+        ⚠️ 리워드를 받으려면 <a href="{{ url_for('login') }}" style="color: var(--green-dark); font-weight: 700;">로그인</a>이 필요합니다.
+    </div>
+    {% endif %}
+
+    <!-- 광고 영역 -->
+    <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 2px 14px rgba(0,0,0,0.07); text-align: center; margin-bottom: 32px;">
+        <h2 style="font-family: var(--font-display); font-size: 1.4rem; color: var(--dark); margin-bottom: 8px; border: none; padding: 0;">광고 시청</h2>
+        <p style="font-size: .88rem; color: #999; margin-bottom: 28px;">아래 광고를 시청한 후 리워드 받기 버튼을 눌러주세요</p>
+
+        <!-- ============================================================
+             Google AdSense 보상형 광고 삽입 위치
+             AdSense 승인 후 아래 div를 AdSense 코드로 교체하세요.
+             형식: <ins class="adsbygoogle" ...></ins>
+        ============================================================ -->
+        <div id="ad-placeholder" style="
+            width: 100%;
+            max-width: 640px;
+            height: 360px;
+            margin: 0 auto 28px;
+            background: linear-gradient(135deg, #e8e8e8, #d0d0d0);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: .9rem;
+            gap: 10px;
+        ">
+            <span style="font-size: 2.5rem;">📺</span>
+            <span>Google AdSense 보상형 광고 삽입 위치</span>
+            <span style="font-size: .78rem;">(AdSense 승인 후 이 영역을 광고 코드로 교체하세요)</span>
+        </div>
+        <!-- ============================================================ -->
+
+        <!-- 광고 시청 타이머 & 리워드 버튼 -->
+        <div id="timer-area">
+            <p id="timer-text" style="font-size: .9rem; color: #aaa; margin-bottom: 16px;">
+                광고 시청 후 <span id="countdown" style="font-weight:700; color: var(--green-primary);">5</span>초 뒤 버튼이 활성화됩니다
+            </p>
+            <form action="{{ url_for('claim_reward') }}" method="POST">
+                <button id="reward-btn" type="submit" disabled style="
+                    padding: 14px 48px;
+                    background: #ccc;
+                    color: white;
+                    border: none;
+                    border-radius: 28px;
+                    font-size: 1rem;
+                    font-weight: 700;
+                    font-family: var(--font-main);
+                    cursor: not-allowed;
+                    transition: all .3s;
+                ">🎁 리워드 받기 (+10포인트)</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 리워드 지급 내역 -->
+    {% if session.get('user') and reward_history %}
+    <div style="background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 14px rgba(0,0,0,0.07);">
+        <h2 style="font-family: var(--font-display); font-size: 1.2rem; color: var(--dark); margin-bottom: 18px; border: none; padding: 0;">📋 최근 리워드 내역</h2>
+        <ul style="list-style: none;">
+            {% for r in reward_history %}
+            <li style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: .88rem;">
+                <span style="color: #555;">{{ r['created'] }}</span>
+                <span style="font-weight: 700; color: var(--green-primary);">+{{ r['amount'] }} 포인트</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+// 5초 카운트다운 후 버튼 활성화
+let seconds = 5;
+const countdown = document.getElementById('countdown');
+const btn = document.getElementById('reward-btn');
+
+const timer = setInterval(() => {
+    seconds--;
+    countdown.textContent = seconds;
+    if (seconds <= 0) {
+        clearInterval(timer);
+        document.getElementById('timer-text').textContent = '광고 시청 완료! 리워드를 받아보세요 🎉';
+        btn.disabled = false;
+        btn.style.background = 'var(--green-primary)';
+        btn.style.cursor = 'pointer';
+        btn.style.boxShadow = '0 4px 14px rgba(61,179,69,0.4)';
+    }
+}, 1000);
+</script>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}민원 작성 - Mafia GO!{% endblock %}
+{% block content %}
+<div class="page-header"><h1>민원 작성</h1><p>불편 사항을 알려주세요</p></div>
+<div class="form-container fade-up">
+    <h2 class="form-title">민원 접수</h2>
+    <p class="form-subtitle">접수된 민원은 3~5영업일 내에 처리됩니다</p>
+    <form method="POST">
+        <div class="form-group">
+            <label for="category">민원 유형</label>
+            <select id="category" name="category" required>
+                <option value="">선택해주세요</option>
+                <option value="service">서비스 불편</option>
+                <option value="policy">정책 문의</option>
+                <option value="improvement">개선 제안</option>
+                <option value="other">기타</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="title">제목</label>
+            <input type="text" id="title" name="title" placeholder="민원 제목을 입력해주세요" required>
+        </div>
+        <div class="form-group">
+            <label for="content">내용</label>
+            <textarea id="content" name="content" placeholder="민원 내용을 상세히 작성해주세요" required></textarea>
+        </div>
+        <button type="submit" class="form-submit">민원 접수하기</button>
+    </form>
+</div>
+{% endblock %}
