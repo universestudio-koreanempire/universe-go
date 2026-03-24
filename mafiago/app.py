@@ -124,7 +124,7 @@ def index():
                            hero_animation=HERO_ANIMATION, hero_title=HERO_TITLE)
 
 # ===== 사이트 이름 설정 =====
-SITE_NAME = "Universe Go!"   # 네비게이션, 푸터 로고에 표시되는 이름
+SITE_NAME = "Universe Studio"   # 네비게이션, 푸터 로고에 표시되는 이름
 
 # ===== 히어로 타이틀 설정 =====
 HERO_TITLE = "Mafia GO!"     # 회색 박스 안에 표시되는 이름
