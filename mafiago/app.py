@@ -124,7 +124,7 @@ def index():
                            hero_animation=HERO_ANIMATION, hero_title=HERO_TITLE)
 
 # ===== 사이트 이름 설정 =====
-SITE_NAME = "Universe Studio"   # 네비게이션, 푸터 로고에 표시되는 이름
+SITE_NAME = "Universe Go!"   # 네비게이션, 푸터 로고에 표시되는 이름
 
 # ===== 히어로 타이틀 설정 =====
 HERO_TITLE = "Mafia GO!"     # 회색 박스 안에 표시되는 이름
@@ -502,35 +502,37 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-        email    = request.form.get('email', '').strip()
+        email    = request.form.get('email', '').strip()  # 선택 항목
 
         if not username or not password:
             flash('아이디와 비밀번호는 필수 항목입니다.', 'error')
             return render_template('register.html')
 
         db = get_db()
-        try:
-            # 중복 체크와 삽입을 동시에 시도합니다. (가장 안전한 방법)
-            db.execute(
-                'INSERT INTO users (username, email, password, created) VALUES (?, ?, ?, ?)',
-                (username, email, hash_password(password), datetime.now().strftime('%Y-%m-%d'))
-            )
-            db.commit()
-            db.close()
-            flash('회원가입이 완료되었습니다. 로그인해주세요.', 'success')
-            return redirect(url_for('login'))
+        # 이메일은 입력한 경우에만 중복 체크
+        if email:
+            existing = db.execute(
+                'SELECT id FROM users WHERE username = ? OR email = ?', (username, email)
+            ).fetchone()
+        else:
+            existing = db.execute(
+                'SELECT id FROM users WHERE username = ?', (username,)
+            ).fetchone()
 
-        except sqlite3.IntegrityError as e:
-            # UNIQUE 제약 조건 위반(중복) 발생 시 처리
+        if existing:
+            flash('이미 사용 중인 아이디 또는 이메일입니다.', 'error')
             db.close()
-            error_msg = str(e)
-            if 'users.email' in error_msg:
-                flash('이미 사용 중인 이메일입니다.', 'error')
-            elif 'users.username' in error_msg:
-                flash('이미 사용 중인 아이디입니다.', 'error')
-            else:
-                flash('이미 등록된 정보입니다.', 'error')
             return render_template('register.html')
+
+        db.execute(
+            'INSERT INTO users (username, email, password, created) VALUES (?, ?, ?, ?)',
+            (username, email if email else None, hash_password(password), datetime.now().strftime('%Y-%m-%d'))
+        )
+        db.commit()
+        db.close()
+
+        flash('회원가입이 완료되었습니다. 로그인해주세요.', 'success')
+        return redirect(url_for('login'))
 
     return render_template('register.html')
 
@@ -564,22 +566,20 @@ def account():
 def register_email():
     if not session.get('user'):
         return redirect(url_for('login'))
-    
     email = request.form.get('email', '').strip()
     if not email:
         flash('이메일을 입력해주세요.', 'error')
         return redirect(url_for('account'))
-        
     db = get_db()
-    try:
-        db.execute('UPDATE users SET email = ? WHERE username = ?', (email, session['user']))
-        db.commit()
+    existing = db.execute('SELECT id FROM users WHERE email = ?', (email,)).fetchone()
+    if existing:
+        flash('이미 사용 중인 이메일입니다.', 'error')
         db.close()
-        flash('이메일이 등록되었습니다.', 'success')
-    except sqlite3.IntegrityError:
-        db.close()
-        flash('이미 다른 계정에서 사용 중인 이메일입니다.', 'error')
-        
+        return redirect(url_for('account'))
+    db.execute('UPDATE users SET email = ? WHERE username = ?', (email, session['user']))
+    db.commit()
+    db.close()
+    flash('이메일이 등록되었습니다.', 'success')
     return redirect(url_for('account'))
 
 @app.route('/account/delete-purchase/<int:purchase_id>', methods=['POST'])
