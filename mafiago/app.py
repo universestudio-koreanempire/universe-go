@@ -1,8 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from datetime import datetime
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import hashlib
 import os
+from datetime import datetime
+
+# Render의 데이터베이스 연결 주소
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 app = Flask(__name__)
 app.secret_key = 'mafia_go_secret_key_2024'
@@ -26,16 +31,19 @@ AD_PANORAMA = """
 """
 
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'mafia_go.db')
+def get_db():
+    # SQLite의 Row 객체처럼 쓰기 위해 RealDictCursor를 사용합니다.
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
-# ===== DB 초기화 =====
+
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
 
+    # 유저 테이블
     cur.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            id       SERIAL PRIMARY KEY,
             username TEXT    UNIQUE NOT NULL,
             email    TEXT    UNIQUE,
             password TEXT    NOT NULL,
@@ -43,9 +51,10 @@ def init_db():
         )
     ''')
 
+    # 신고/문의 테이블
     cur.execute('''
         CREATE TABLE IF NOT EXISTS complaints (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            id       SERIAL PRIMARY KEY,
             username TEXT NOT NULL,
             category TEXT NOT NULL,
             title    TEXT NOT NULL,
@@ -55,18 +64,20 @@ def init_db():
         )
     ''')
 
+    # 공지사항 테이블
     cur.execute('''
         CREATE TABLE IF NOT EXISTS notices (
-            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            id      SERIAL PRIMARY KEY,
             title   TEXT NOT NULL,
             content TEXT NOT NULL,
             created TEXT NOT NULL
         )
     ''')
 
+    # 구매 내역 테이블
     cur.execute('''
         CREATE TABLE IF NOT EXISTS purchases (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            id         SERIAL PRIMARY KEY,
             username   TEXT NOT NULL,
             item_id    INTEGER NOT NULL,
             item_name  TEXT NOT NULL,
@@ -77,25 +88,30 @@ def init_db():
         )
     ''')
 
+    # 리워드/포인트 테이블
     cur.execute('''
         CREATE TABLE IF NOT EXISTS rewards (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            id       SERIAL PRIMARY KEY,
             username TEXT NOT NULL,
             amount   INTEGER NOT NULL DEFAULT 10,
             created  TEXT NOT NULL
         )
     ''')
 
+    # 초기 데이터 삽입
     cur.execute('SELECT COUNT(*) FROM notices')
     if cur.fetchone()[0] == 0:
+        now = datetime.now().strftime('%Y-%m-%d')
         default_notices = [
-            ('유니버스 서비스 오픈 안내',   '안녕하세요. 유니버스 Mafia GO! 서비스가 정식 오픈하였습니다. 많은 이용 부탁드립니다.', '2024-01-15'),
-            ('개인정보 처리방침 개정 안내', '개인정보 처리방침이 일부 개정되었습니다. 자세한 내용을 확인해 주세요.',               '2024-01-10'),
-            ('시스템 점검 안내 (1월 20일)', '1월 20일 오전 2시~4시 시스템 점검이 진행될 예정입니다. 이용에 참고 부탁드립니다.',   '2024-01-08'),
+            ('유니버스 서비스 오픈 안내', '안녕하세요. 유니버스 Mafia GO! 서비스가 정식 오픈하였습니다.', '2024-01-15'),
+            ('개인정보 처리방침 개정 안내', '개인정보 처리방침이 일부 개정되었습니다.', '2024-01-10'),
+            ('시스템 점검 안내 (1월 20일)', '1월 20일 오전 2시~4시 시스템 점검 예정입니다.', '2024-01-08'),
         ]
-        cur.executemany('INSERT INTO notices (title, content, created) VALUES (?, ?, ?)', default_notices)
+        for notice in default_notices:
+            cur.execute('INSERT INTO notices (title, content, created) VALUES (%s, %s, %s)', notice)
 
     conn.commit()
+    cur.close()
     conn.close()
 
 def get_db():
@@ -1253,4 +1269,6 @@ def game_lose():
 
 if __name__ == '__main__':
     init_db()
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
+    # Render 환경의 PORT를 자동으로 감지하도록 설정
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, debug=True, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
