@@ -1,56 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from datetime import datetime
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import sqlite3
 import hashlib
 import os
-from datetime import datetime
 
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import os
-
-# 환경 변수에서 DB 주소 가져오기
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-def init_db():
-    # DB 주소가 없으면 실행하지 않음
-    if not DATABASE_URL:
-        return
-        
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cur = conn.cursor()
-        
-        # 1. 공지사항 테이블 생성
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS notices (
-                id SERIAL PRIMARY KEY,
-                title TEXT NOT NULL,
-                content TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ''')
-        
-        # 2. 사용자 테이블 생성
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                email TEXT
-            );
-        ''')
-        
-        conn.commit()
-        cur.close()
-        conn.close()
-        print("테이블 생성 완료!")
-    except Exception as e:
-        print(f"DB 초기화 중 오류 발생: {e}")
-
-# 서버가 켜질 때 이 함수를 실행합니다.
-init_db()
+app = Flask(__name__)
+app.secret_key = 'mafia_go_secret_key_2024'
 
 # ===== 관리자 계정 설정 =====
 # 관리자 아이디를 여기에 추가하세요. 여러 명 지정 가능.
@@ -71,19 +26,16 @@ AD_PANORAMA = """
 """
 
 
-def get_db():
-    # SQLite의 Row 객체처럼 쓰기 위해 RealDictCursor를 사용합니다.
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+DB_PATH = os.path.join(os.path.dirname(__file__), 'mafia_go.db')
 
-
+# ===== DB 초기화 =====
 def init_db():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    # 유저 테이블
     cur.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            id       SERIAL PRIMARY KEY,
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT    UNIQUE NOT NULL,
             email    TEXT    UNIQUE,
             password TEXT    NOT NULL,
@@ -91,10 +43,9 @@ def init_db():
         )
     ''')
 
-    # 신고/문의 테이블
     cur.execute('''
         CREATE TABLE IF NOT EXISTS complaints (
-            id       SERIAL PRIMARY KEY,
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL,
             category TEXT NOT NULL,
             title    TEXT NOT NULL,
@@ -104,20 +55,18 @@ def init_db():
         )
     ''')
 
-    # 공지사항 테이블
     cur.execute('''
         CREATE TABLE IF NOT EXISTS notices (
-            id      SERIAL PRIMARY KEY,
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
             title   TEXT NOT NULL,
             content TEXT NOT NULL,
             created TEXT NOT NULL
         )
     ''')
 
-    # 구매 내역 테이블
     cur.execute('''
         CREATE TABLE IF NOT EXISTS purchases (
-            id         SERIAL PRIMARY KEY,
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
             username   TEXT NOT NULL,
             item_id    INTEGER NOT NULL,
             item_name  TEXT NOT NULL,
@@ -128,37 +77,31 @@ def init_db():
         )
     ''')
 
-    # 리워드/포인트 테이블
     cur.execute('''
         CREATE TABLE IF NOT EXISTS rewards (
-            id       SERIAL PRIMARY KEY,
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL,
             amount   INTEGER NOT NULL DEFAULT 10,
             created  TEXT NOT NULL
         )
     ''')
 
-    # 초기 데이터 삽입
     cur.execute('SELECT COUNT(*) FROM notices')
     if cur.fetchone()[0] == 0:
-        now = datetime.now().strftime('%Y-%m-%d')
         default_notices = [
-            ('유니버스 서비스 오픈 안내', '안녕하세요. 유니버스 Mafia GO! 서비스가 정식 오픈하였습니다.', '2024-01-15'),
-            ('개인정보 처리방침 개정 안내', '개인정보 처리방침이 일부 개정되었습니다.', '2024-01-10'),
-            ('시스템 점검 안내 (1월 20일)', '1월 20일 오전 2시~4시 시스템 점검 예정입니다.', '2024-01-08'),
+            ('유니버스 서비스 오픈 안내',   '안녕하세요. 유니버스 Mafia GO! 서비스가 정식 오픈하였습니다. 많은 이용 부탁드립니다.', '2024-01-15'),
+            ('개인정보 처리방침 개정 안내', '개인정보 처리방침이 일부 개정되었습니다. 자세한 내용을 확인해 주세요.',               '2024-01-10'),
+            ('시스템 점검 안내 (1월 20일)', '1월 20일 오전 2시~4시 시스템 점검이 진행될 예정입니다. 이용에 참고 부탁드립니다.',   '2024-01-08'),
         ]
-        for notice in default_notices:
-            cur.execute('INSERT INTO notices (title, content, created) VALUES (%s, %s, %s)', notice)
+        cur.executemany('INSERT INTO notices (title, content, created) VALUES (?, ?, ?)', default_notices)
 
     conn.commit()
-    cur.close()
     conn.close()
 
-db = get_db()
-cur = db.cursor() # 심부름꾼(커서)을 만듭니다.
-cur.execute('SELECT * FROM notices ORDER BY id DESC LIMIT 3')
-notices = cur.fetchall()
-cur.close() # 작업이 끝나면 심부름꾼을 돌려보냅니다.
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -181,7 +124,7 @@ def index():
                            hero_animation=HERO_ANIMATION, hero_title=HERO_TITLE)
 
 # ===== 사이트 이름 설정 =====
-SITE_NAME = "Universe Studio"   # 네비게이션, 푸터 로고에 표시되는 이름
+SITE_NAME = "Universe Go!"   # 네비게이션, 푸터 로고에 표시되는 이름
 
 # ===== 히어로 타이틀 설정 =====
 HERO_TITLE = "Mafia GO!"     # 회색 박스 안에 표시되는 이름
@@ -418,51 +361,12 @@ def store():
 
 @app.route('/store/buy/points/<int:item_id>', methods=['POST'])
 def buy_with_points(item_id):
-    if not session.get('user'):
-        flash('로그인 후 구매할 수 있습니다.', 'error')
-        return redirect(url_for('login'))
-    item = next((i for i in STORE_ITEMS if i['id'] == item_id), None)
-    if not item or item['payment'] == 'cash':
-        flash('잘못된 요청입니다.', 'error')
-        return redirect(url_for('store'))
-    db = get_db()
-    total = db.execute(
-        'SELECT SUM(amount) FROM rewards WHERE username = ?', (session['user'],)
-    ).fetchone()[0] or 0
-    spent = db.execute(
-        'SELECT SUM(amount) FROM purchases WHERE username = ? AND method = ?', (session['user'], '포인트')
-    ).fetchone()[0] or 0
-    balance = total - spent
-    if balance < item['points_price']:
-        flash(f'포인트가 부족합니다. (보유: {balance}P / 필요: {item["points_price"]}P)', 'error')
-        db.close()
-        return redirect(url_for('store'))
-    db.execute(
-        'INSERT INTO purchases (username, item_id, item_name, method, amount, created) VALUES (?, ?, ?, ?, ?, ?)',
-        (session['user'], item_id, item['name'], '포인트', str(item['points_price']) + 'P',
-         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    )
-    db.commit()
-    db.close()
-    flash(f'🎉 [{item["name"]}] 구매 완료! ({item["points_price"]}P 차감)', 'success')
+    flash('🔒 현재 포인트 구매 기능은 준비 중입니다.', 'error')
     return redirect(url_for('store'))
 
 @app.route('/store/buy/cash/<int:item_id>', methods=['POST'])
 def buy_with_cash(item_id):
-    if not session.get('user'):
-        flash('로그인 후 구매할 수 있습니다.', 'error')
-        return redirect(url_for('login'))
-    item = next((i for i in STORE_ITEMS if i['id'] == item_id), None)
-    if not item or item['payment'] == 'points' or not item['cash_price']:
-        flash('잘못된 요청입니다.', 'error')
-        return redirect(url_for('store'))
-    # ================================================================
-    # 토스페이먼츠 연동 위치
-    # 실제 결제 연동 시 아래 주석을 풀고 API 키를 입력하세요.
-    # TOSS_CLIENT_KEY = "test_ck_XXXXXXXXXXXXXXXX"
-    # 현재는 미연동 상태로 결제 대기 안내만 표시합니다.
-    # ================================================================
-    flash(f'💳 [{item["name"]}] 현금 결제는 현재 PG사 연동 준비 중입니다. 포인트로 구매해 주세요.', 'error')
+    flash('💳 현재 결제 시스템(PG사) 연동 준비 중입니다.', 'error')
     return redirect(url_for('store'))
 
 @app.route('/sitemap')
@@ -486,9 +390,6 @@ def sitemap():
             {'name': '민원의 목적', 'url': '/complaint/purpose'},
             {'name': '민원의 처리과정', 'url': '/complaint/process'},
             {'name': '민원 작성', 'url': '/complaint/write'},
-        ]},
-        {'category': '광고 & 리워드', 'links': [
-            {'name': 'Advertisement for Reward', 'url': '/advertisement'},
         ]},
         {'category': '스토어', 'links': [
             {'name': '스토어', 'url': '/store'},
@@ -516,309 +417,6 @@ def advertisement():
         ).fetchall()
         db.close()
     return render_template('advertisement.html', reward_history=reward_history)
-
-@app.route('/advertisement/claim', methods=['POST'])
-def claim_reward():
-    if not session.get('user'):
-        flash('로그인 후 리워드를 받을 수 있습니다.', 'error')
-        return redirect(url_for('advertisement'))
-    db = get_db()
-    db.execute(
-        'INSERT INTO rewards (username, amount, created) VALUES (?, ?, ?)',
-        (session['user'], 10, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    )
-    db.commit()
-    db.close()
-    flash('🎉 리워드 10포인트가 지급되었습니다!', 'success')
-    return redirect(url_for('advertisement'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-
-        db = get_db()
-        user = db.execute(
-            'SELECT * FROM users WHERE username = ? AND password = ?',
-            (username, hash_password(password))
-        ).fetchone()
-        db.close()
-
-        if user:
-            session['user'] = username
-            flash(f'{username}님, 로그인 성공!', 'success')
-            return redirect(url_for('index'))
-        else:
-            flash('아이디 또는 비밀번호가 올바르지 않습니다.', 'error')
-
-    return render_template('login.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        email    = request.form.get('email', '').strip()  # 선택 항목
-
-        if not username or not password:
-            flash('아이디와 비밀번호는 필수 항목입니다.', 'error')
-            return render_template('register.html')
-
-        db = get_db()
-        # 이메일은 입력한 경우에만 중복 체크
-        if email:
-            existing = db.execute(
-                'SELECT id FROM users WHERE username = ? OR email = ?', (username, email)
-            ).fetchone()
-        else:
-            existing = db.execute(
-                'SELECT id FROM users WHERE username = ?', (username,)
-            ).fetchone()
-
-        if existing:
-            flash('이미 사용 중인 아이디 또는 이메일입니다.', 'error')
-            db.close()
-            return render_template('register.html')
-
-        db.execute(
-            'INSERT INTO users (username, email, password, created) VALUES (?, ?, ?, ?)',
-            (username, email if email else None, hash_password(password), datetime.now().strftime('%Y-%m-%d'))
-        )
-        db.commit()
-        db.close()
-
-        flash('회원가입이 완료되었습니다. 로그인해주세요.', 'success')
-        return redirect(url_for('login'))
-
-    return render_template('register.html')
-
-@app.route('/account')
-def account():
-    if not session.get('user'):
-        flash('로그인 후 이용할 수 있습니다.', 'error')
-        return redirect(url_for('login'))
-    db = get_db()
-    user = db.execute(
-        'SELECT * FROM users WHERE username = ?', (session['user'],)
-    ).fetchone()
-    total_points = db.execute(
-        'SELECT SUM(amount) FROM rewards WHERE username = ?', (session['user'],)
-    ).fetchone()[0] or 0
-    reward_history = db.execute(
-        'SELECT * FROM rewards WHERE username = ? ORDER BY id DESC LIMIT 10', (session['user'],)
-    ).fetchall()
-    complaint_list = db.execute(
-        'SELECT * FROM complaints WHERE username = ? ORDER BY id DESC', (session['user'],)
-    ).fetchall()
-    purchase_history_account = db.execute(
-        'SELECT * FROM purchases WHERE username = ? ORDER BY id DESC LIMIT 10', (session['user'],)
-    ).fetchall()
-    db.close()
-    return render_template('account.html', user=user, total_points=total_points,
-                           reward_history=reward_history, complaint_list=complaint_list,
-                           purchase_history=purchase_history_account)
-
-@app.route('/account/register-email', methods=['POST'])
-def register_email():
-    if not session.get('user'):
-        return redirect(url_for('login'))
-    email = request.form.get('email', '').strip()
-    if not email:
-        flash('이메일을 입력해주세요.', 'error')
-        return redirect(url_for('account'))
-    db = get_db()
-    existing = db.execute('SELECT id FROM users WHERE email = ?', (email,)).fetchone()
-    if existing:
-        flash('이미 사용 중인 이메일입니다.', 'error')
-        db.close()
-        return redirect(url_for('account'))
-    db.execute('UPDATE users SET email = ? WHERE username = ?', (email, session['user']))
-    db.commit()
-    db.close()
-    flash('이메일이 등록되었습니다.', 'success')
-    return redirect(url_for('account'))
-
-@app.route('/account/delete-purchase/<int:purchase_id>', methods=['POST'])
-def delete_purchase(purchase_id):
-    if not session.get('user'):
-        return redirect(url_for('login'))
-    db = get_db()
-    # 본인 구매 내역인지 확인
-    purchase = db.execute(
-        'SELECT * FROM purchases WHERE id = ? AND username = ?', (purchase_id, session['user'])
-    ).fetchone()
-    if not purchase:
-        flash('삭제할 수 없는 내역입니다.', 'error')
-        db.close()
-        return redirect(url_for('account'))
-    db.execute('DELETE FROM purchases WHERE id = ?', (purchase_id,))
-    db.commit()
-    db.close()
-    flash('구매 내역이 삭제되었습니다.', 'success')
-    return redirect(url_for('account'))
-
-@app.route('/admin/members')
-def admin_members():
-    if session.get('user') not in ADMIN_USERS:
-        flash('관리자만 접근할 수 있습니다.', 'error')
-        return redirect(url_for('index'))
-    db = get_db()
-    members = db.execute('SELECT * FROM users ORDER BY id DESC').fetchall()
-    db.close()
-    return render_template('admin_members.html', members=members)
-
-@app.route('/admin/members/delete/<int:user_id>', methods=['POST'])
-def admin_delete_member(user_id):
-    if session.get('user') not in ADMIN_USERS:
-        flash('관리자만 접근할 수 있습니다.', 'error')
-        return redirect(url_for('index'))
-    db = get_db()
-    user = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-    if not user:
-        flash('존재하지 않는 계정입니다.', 'error')
-        db.close()
-        return redirect(url_for('admin_members'))
-    db.execute('DELETE FROM users WHERE id = ?', (user_id,))
-    db.execute('DELETE FROM rewards WHERE username = ?', (user['username'],))
-    db.execute('DELETE FROM purchases WHERE username = ?', (user['username'],))
-    db.commit()
-    db.close()
-    flash(f'[{user["username"]}] 계정이 삭제되었습니다.', 'success')
-    return redirect(url_for('admin_members'))
-
-@app.route('/logout')
-def logout():
-    session.pop('user', None)
-    flash('로그아웃 되었습니다.', 'success')
-    return redirect(url_for('index'))
-
-
-# ================================================================
-# ★ 게임 엔진 통합 (모든 경로는 /game 하위)
-# ================================================================
-from flask_socketio import SocketIO, join_room
-import random, string, time, uuid
-from collections import Counter
-
-socketio = SocketIO(app, cors_allowed_origins="*")
-
-# ── 온라인 상태 ──
-servers          = {}
-invite_ips       = {}
-heartbeats       = {}
-g_roles          = {}
-g_killed         = {}
-g_saved          = {}
-g_arrested       = {}
-dead_players     = {}
-night_phase      = {}
-night_results    = {}
-result_confirmed = {}
-day_votes        = {}
-HEARTBEAT_TIMEOUT = 8
-
-# ── 오프라인 상태 ──
-offline_games = {}
-
-def get_player_id():
-    return session.get('user') or request.remote_addr
-
-def generate_code():
-    while True:
-        length = random.randint(6, 8)
-        chars = string.ascii_uppercase + string.digits
-        code = ''.join(random.choice(chars) for _ in range(length))
-        if code not in invite_ips:
-            return code
-
-def get_active_players(code):
-    now = time.time()
-    beats = heartbeats.get(code, {})
-    return [ip for ip, t in beats.items() if now - t < HEARTBEAT_TIMEOUT]
-
-def reset_online_game(code):
-    invite_ips[code]   = []
-    g_roles[code]      = {}
-    dead_players[code] = []
-    g_killed.pop(code, None); g_saved.pop(code, None); g_arrested.pop(code, None)
-    night_phase.pop(code, None); night_results.pop(code, None)
-    result_confirmed.pop(code, None); day_votes.pop(code, None)
-    heartbeats[code]   = {}
-
-def check_victory(code):
-    all_players   = invite_ips.get(code, [])
-    dead          = dead_players.get(code, [])
-    survivors     = [p for p in all_players if p not in dead]
-    mafia_alive   = [p for p in survivors if g_roles.get(code, {}).get(p) == "마피아"]
-    citizen_alive = [p for p in survivors if g_roles.get(code, {}).get(p) != "마피아"]
-    if len(mafia_alive) == 0:                 return "citizen_win"
-    if len(mafia_alive) >= len(citizen_alive): return "mafia_win"
-    return None
-
-SOCKETIO_SCRIPT = '<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>'
-
-def game_top_bar():
-    user = session.get("user")
-    if user:
-        return f'<div style="position:absolute;top:10px;right:10px;font-size:18px">{user}</div>'
-    return ""
-
-def back_button_g(href="/game", label="게임 메인으로"):
-    return f'<div style="text-align:center;margin-top:30px"><button onclick="location.href=\'{href}\'" style="padding:20px;font-size:20px">{label}</button></div>'
-
-def waiting_room_html(title, code, start_url):
-    count = len(get_active_players(code))
-    my_id = get_player_id()
-    disabled_attr = "disabled" if count < 4 else ""
-    status_txt = "4명 이상이면 게임을 시작할 수 있습니다." if count < 4 else "게임을 시작할 수 있습니다!"
-    return f"""
-    <h2 style="text-align:center">{title}</h2>
-    <p style="text-align:center;color:#0066cc;font-size:16px">나는 <b>{my_id}</b> 으로 표시됩니다</p>
-    <h3 id="count" style="text-align:center">현재 접속 인원: {count}명</h3>
-    <h4 id="status" style="text-align:center;color:gray">{status_txt}</h4>
-    <div style="text-align:center">
-        <button id="start_btn" onclick="location.href='{start_url}'"
-            style="padding:20px;font-size:20px;cursor:pointer" {disabled_attr}>
-            게임 시작
-        </button>
-    </div>
-    <script>
-        function sendHeartbeat(){{fetch("/game/heartbeat/{code}",{{method:"POST"}});}}
-        function updateCount(){{
-            fetch("/game/player_count/{code}").then(r=>r.json()).then(data=>{{
-                var c=data.count;
-                document.getElementById("count").innerText="현재 접속 인원: "+c+"명";
-                var btn=document.getElementById("start_btn");
-                if(c>=4){{btn.disabled=false;btn.style.opacity="1";document.getElementById("status").innerText="게임을 시작할 수 있습니다!";document.getElementById("status").style.color="green";}}
-                else{{btn.disabled=true;btn.style.opacity="0.4";document.getElementById("status").innerText="4명 이상이면 게임을 시작할 수 있습니다.("+c+"/4)";document.getElementById("status").style.color="gray";}}
-            }});
-        }}
-        sendHeartbeat();setInterval(sendHeartbeat,3000);
-        updateCount();setInterval(updateCount,2000);
-    </script>"""
-
-def ingame_socket_js(code):
-    return f"""{SOCKETIO_SCRIPT}
-    <script>
-        var socket=io();
-        socket.emit("join_room",{{code:"{code}"}});
-        function sendHeartbeat(){{socket.emit("heartbeat",{{code:"{code}"}});}}
-        sendHeartbeat();setInterval(sendHeartbeat,3000);
-        socket.on("game_abort",function(){{
-            alert("참여 인원이 부족하여 게임이 중단되었습니다. 대기실로 돌아갑니다.");
-            window.location.href="/game/join/{code}";
-        }});
-        socket.on("night_done",function(){{window.location.href="/game/night_result/{code}";}});
-    </script>"""
-
-# ── 오프라인 ──
-def init_offline_game(player_count):
-    role_list = ["🔫 마피아","👮 경찰","🧑‍⚕️ 의사"] + ["👨 시민"]*(player_count-3)
-    random.shuffle(role_list)
-    return {"players":player_count,"roles":role_list,"alive":[True]*player_count,"dead":[],
-            "night_step":"mafia","mafia_target":None,"doctor_target":None,"police_target":None,
-            "votes":[0]*player_count,"night_deaths":[],"night_saves":[],"role_index":0}
 
 @app.route('/game')
 def game_home():
@@ -1310,6 +908,4 @@ def game_lose():
 
 if __name__ == '__main__':
     init_db()
-    # Render 환경의 PORT를 자동으로 감지하도록 설정
-    port = int(os.environ.get("PORT", 5000))
-    socketio.run(app, debug=True, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
