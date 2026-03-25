@@ -6,6 +6,16 @@ import hashlib
 import os
 from datetime import datetime
 
+CREATE TABLE IF NOT EXISTS notices (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 테스트용 데이터 하나 넣기 (메인 화면이 잘 나오는지 확인용)
+INSERT INTO notices (title, content) VALUES ('환영합니다!', '마피아 게임에 오신 것을 환영합니다.');
+
 # Render의 데이터베이스 연결 주소
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
