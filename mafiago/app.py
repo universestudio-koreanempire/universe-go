@@ -114,8 +114,11 @@ def init_db():
     cur.close()
     conn.close()
 
-def get_db():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+db = get_db()
+cur = db.cursor() # 심부름꾼(커서)을 만듭니다.
+cur.execute('SELECT * FROM notices ORDER BY id DESC LIMIT 3')
+notices = cur.fetchall()
+cur.close() # 작업이 끝나면 심부름꾼을 돌려보냅니다.
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
