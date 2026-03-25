@@ -16,17 +16,6 @@
             <a href="{{ url_for('index') }}" class="app-logo">{{ site_name }}</a>
         </div>
         <div class="app-header-right">
-            {% if session.get('user') %}
-                <a href="{{ url_for('account') }}" class="app-header-icon" title="마이페이지">
-                    <span>👤</span>
-                </a>
-                <a href="{{ url_for('logout') }}" class="app-header-icon" title="로그아웃">
-                    <span>🚪</span>
-                </a>
-            {% else %}
-                <a href="{{ url_for('login') }}" class="app-header-btn">로그인</a>
-                <a href="{{ url_for('register') }}" class="app-header-btn app-header-btn-primary">가입</a>
-            {% endif %}
         </div>
     </header>
 
