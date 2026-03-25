@@ -6,21 +6,51 @@ import hashlib
 import os
 from datetime import datetime
 
-CREATE TABLE IF NOT EXISTS notices (
-    id SERIAL PRIMARY KEY,
-    title TEXT NOT NULL,
-    content TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import os
 
--- 테스트용 데이터 하나 넣기 (메인 화면이 잘 나오는지 확인용)
-INSERT INTO notices (title, content) VALUES ('환영합니다!', '마피아 게임에 오신 것을 환영합니다.');
-
-# Render의 데이터베이스 연결 주소
+# 환경 변수에서 DB 주소 가져오기
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-app = Flask(__name__)
-app.secret_key = 'mafia_go_secret_key_2024'
+def init_db():
+    # DB 주소가 없으면 실행하지 않음
+    if not DATABASE_URL:
+        return
+        
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor()
+        
+        # 1. 공지사항 테이블 생성
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS notices (
+                id SERIAL PRIMARY KEY,
+                title TEXT NOT NULL,
+                content TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        ''')
+        
+        # 2. 사용자 테이블 생성
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                email TEXT
+            );
+        ''')
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("테이블 생성 완료!")
+    except Exception as e:
+        print(f"DB 초기화 중 오류 발생: {e}")
+
+# 서버가 켜질 때 이 함수를 실행합니다.
+init_db()
 
 # ===== 관리자 계정 설정 =====
 # 관리자 아이디를 여기에 추가하세요. 여러 명 지정 가능.
