@@ -20,5 +20,8 @@
         <button type="submit" class="form-submit">회원가입</button>
     </form>
     <p class="form-footer">이미 계정이 있으신가요? <a href="{{ url_for('login') }}">로그인</a></p>
+    <p class="form-footer" style="margin-top:12px; font-size:0.78rem; color:#aaa; line-height:1.7;">
+        여기서 회원가입하면 이 사이트의 <a href="{{ url_for('privacy') }}" style="color:var(--green-primary); font-weight:600;">개인정보 처리 방침</a>에 동의하는 것으로 간주됩니다.
+    </p>
 </div>
 {% endblock %}
