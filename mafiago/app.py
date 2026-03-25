@@ -115,9 +115,7 @@ def init_db():
     conn.close()
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
