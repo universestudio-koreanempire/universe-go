@@ -1,12 +1,30 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
-from datetime import datetime
-import sqlite3
-import hashlib
-import os
+# 기존 임포트 아래에 아래 내용들을 추가하세요
+from flask_socketio import SocketIO, join_room, leave_room, emit
+from collections import Counter
+import uuid
+import time
+import random
+
+# SocketIO 객체 생성 (app = Flask(__name__) 바로 아래에 넣으세요)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 
 app = Flask(__name__)
 app.secret_key = 'mafia_go_secret_key_2024'
 
+# 기존 코드 유지
+app = Flask(__name__)
+app.secret_key = 'mafia_go_secret_key_2024'
+
+# --- 추가 시작 ---
+from flask_socketio import SocketIO, join_room, leave_room, emit
+import uuid
+import time
+import random
+from collections import Counter
+
+# async_mode='gevent'는 Render 배포 환경(gevent)과 호환을 위해 중요합니다.
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+# --- 추가 끝 ---
 # ===== 관리자 계정 설정 =====
 # 관리자 아이디를 여기에 추가하세요. 여러 명 지정 가능.
 ADMIN_USERS = ['admin']
@@ -27,6 +45,21 @@ AD_PANORAMA = """
 
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'mafia_go.db')
+offline_games = {}
+servers = {}
+invite_ips = {}
+heartbeats = {}
+g_roles = {}
+dead_players = {}
+night_phase = {}
+g_killed = {}
+g_saved = {}
+g_arrested = {}
+night_results = {}
+result_confirmed = {}
+day_votes = {}
+HEARTBEAT_TIMEOUT = 10
+SOCKETIO_SCRIPT = '<script src="https://cdn.socketio.org/4.7.2/socketio.min.js"></script>'
 
 # ===== DB 초기화 =====
 def init_db():
@@ -900,12 +933,17 @@ def game_victory(code, winner):
     <h2 style="text-align:center;margin-top:40px;font-size:30px">{mafia_id}는 마피아였습니다.<br>세상은 마피아에게 점령됐습니다.</h2>
     {back_button_g('/game','게임 메인으로')}"""
 
+
 @app.route('/game/lose')
 def game_lose():
     return f"""<h1 style="text-align:center;color:red;font-size:80px">패배</h1>
     {back_button_g('/game','게임 메인으로')}"""
 
-
 if __name__ == '__main__':
-    init_db()
+    # 1. 서버가 시작될 때 SQLite DB와 테이블을 자동으로 생성합니다.
+    init_db() 
+    
+    # 2. 서버 실행 설정
+    # allow_unsafe_werkzeug=True는 로컬 테스트 시 필요할 수 있으나, 
+    # Render 배포 시에는 gunicorn이 관리하므로 이 코드는 로컬 실행용으로만 작동합니다.
     socketio.run(app, debug=True, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
