@@ -111,8 +111,8 @@ def init_db():
     conn.close()
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    # Render 환경 변수에 저장한 DATABASE_URL을 사용하여 PostgreSQL에 연결합니다.
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
 
 def hash_password(password):
