@@ -1,8 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
-from datetime import datetime
-import sqlite3
-import hashlib
+from flask_socketio import SocketIO, join_room, emit # 추가
+import psycopg2 # sqlite3 대신 사용
+from psycopg2.extras import RealDictCursor
 import os
+import hashlib
+from datetime import datetime
+import time
+import random
+import uuid
+from collections import Counter
 
 app = Flask(__name__)
 app.secret_key = 'mafia_go_secret_key_2024'
@@ -10,6 +16,12 @@ app.secret_key = 'mafia_go_secret_key_2024'
 # ===== 관리자 계정 설정 =====
 # 관리자 아이디를 여기에 추가하세요. 여러 명 지정 가능.
 ADMIN_USERS = ['admin']
+
+# 1. Socket.IO 객체 생성 (이게 있어야 파일 하단의 @socketio.on 에러가 사라집니다)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+
+# 2. Render 환경 변수에서 데이터베이스 주소 가져오기
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 # ===== 광고 설정 =====
 # 모든 광고는 여기서 관리하세요.
