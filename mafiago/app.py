@@ -129,8 +129,18 @@ def inject_site_name():
 @app.route('/')
 def index():
     db = get_db()
-    notices = db.execute('SELECT * FROM notices ORDER BY id DESC LIMIT 3').fetchall()
+    cur = db.cursor() # 1. 먼저 명령을 내릴 '커서'를 만듭니다.
+    
+    # 2. 커서를 통해 SQL 명령을 실행합니다.
+    cur.execute('SELECT * FROM notices ORDER BY id DESC LIMIT 3')
+    
+    # 3. 실행된 결과를 가져와서 notices 변수에 담습니다.
+    notices = cur.fetchall()
+    
+    # 4. 사용이 끝난 커서와 데이터베이스 연결을 닫습니다.
+    cur.close()
     db.close()
+    
     return render_template('index.html', notices=notices,
                            ad_panorama=AD_PANORAMA,
                            hero_animation=HERO_ANIMATION, hero_title=HERO_TITLE)
