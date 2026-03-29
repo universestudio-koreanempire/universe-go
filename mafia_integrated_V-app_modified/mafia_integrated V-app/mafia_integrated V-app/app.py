@@ -696,11 +696,10 @@ night_phase      = {}
 night_results    = {}
 result_confirmed = {}
 day_votes        = {}
-HEARTBEAT_TIMEOUT = 8
+HEARTBEAT_TIMEOUT = 3
 
 # ── 오프라인 상태 ──
 offline_games = {}
-active_nicknames = {}
 
 def get_player_id():
     if 'player_id' not in session:
@@ -818,25 +817,20 @@ def get_active_players(code):
     now = time.time()
     active = []
 
-    # 서버 없으면 빈 리스트
     if code not in heartbeats:
         return active
 
     for player_id, last_seen in list(heartbeats[code].items()):
-        # ⭐ 아직 살아있는 유저 (3초 기준)
         if now - last_seen < 1:
             active.append(player_id)
         else:
-            # ❌ 나간 유저 처리
             del heartbeats[code][player_id]
 
-            # invite_ips에서도 제거
             if code in invite_ips and player_id in invite_ips[code]:
                 invite_ips[code].remove(player_id)
 
-            # ⭐ 닉네임 목록에서도 제거 (중요🔥)
-            if player_id in active_nicknames:
-                del active_nicknames[player_id]
+            # 닉네임은 메모리 삭제가 아니라 DB 비활성화
+            deactivate_nickname(player_id)
 
     return active
 
@@ -1278,8 +1272,6 @@ def game_join(code):
     ip = get_player_id()
 
     nickname = (session.get('game_nickname') or '').strip()
-    if nickname and ip not in active_nicknames:
-        active_nicknames[ip] = nickname
 
     if code not in invite_ips:
         return render_online_shell(
@@ -1301,6 +1293,23 @@ def game_join(code):
             </div>
             '''
         )
+
+    # 세션에 닉네임이 있고, 다른 활성 플레이어가 쓰고 있지 않으면 다시 활성화
+    if is_nickname_in_use(nickname, exclude_player_id=ip):
+        return render_online_shell(
+            "오류",
+            "이미 사용 중인 닉네임입니다.",
+            f'''
+            <div class="note">[{nickname}] 은(는) 이미 다른 플레이어가 사용 중입니다.</div>
+            <div style="text-align:center; margin-top:20px;">
+                <button class="action-btn btn-red" onclick="location.href='/game/nickname'">
+                    닉네임 다시 설정
+                </button>
+            </div>
+            '''
+        )
+
+    save_or_activate_nickname(ip, nickname)
 
     if ip not in invite_ips[code]:
         invite_ips[code].append(ip)
@@ -1604,7 +1613,6 @@ def game_nickname():
     if request.method == 'POST':
         nickname = request.form.get('nickname', '').strip()
 
-        # 1️⃣ 빈 닉네임 방지
         if not nickname:
             return render_online_shell(
                 "오류",
@@ -1619,16 +1627,15 @@ def game_nickname():
                 '''
             )
 
-        current_nickname = active_nicknames.get(player_id)
+        current_nickname = get_active_nickname(player_id)
 
-        # 2️⃣ 내가 이미 닉네임 있는 경우
+        # 내가 이미 활성 닉네임을 갖고 있으면:
+        # 같은 닉네임 재입력은 허용, 다른 닉네임 새 생성은 차단
         if current_nickname:
-            # 같은 닉네임 → 그냥 유지
             if current_nickname == nickname:
                 session['game_nickname'] = current_nickname
                 return redirect('/game/online')
 
-            # 다른 닉네임 → 차단
             return render_online_shell(
                 "오류",
                 "이미 닉네임이 등록되어 있습니다.",
@@ -1642,29 +1649,25 @@ def game_nickname():
                 '''
             )
 
-        # 3️⃣ 다른 플레이어와 중복 검사
-        for pid, nick in active_nicknames.items():
-            if pid != player_id and nick == nickname:
-                return render_online_shell(
-                    "오류",
-                    "이미 사용 중인 닉네임입니다.",
-                    f'''
-                    <div class="note">[{nickname}] 은(는) 이미 다른 플레이어가 사용 중입니다.</div>
-                    <div style="text-align:center; margin-top:20px;">
-                        <button class="action-btn btn-red" onclick="location.href='/game/nickname'">
-                            다시 입력
-                        </button>
-                    </div>
-                    '''
-                )
+        # 다른 활성 플레이어와 중복 검사
+        if is_nickname_in_use(nickname, exclude_player_id=player_id):
+            return render_online_shell(
+                "오류",
+                "이미 사용 중인 닉네임입니다.",
+                f'''
+                <div class="note">[{nickname}] 은(는) 이미 다른 플레이어가 사용 중입니다.</div>
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="action-btn btn-red" onclick="location.href='/game/nickname'">
+                        다시 입력
+                    </button>
+                </div>
+                '''
+            )
 
-        # 4️⃣ 닉네임 등록
-        active_nicknames[player_id] = nickname
+        save_or_activate_nickname(player_id, nickname)
         session['game_nickname'] = nickname
-
         return redirect('/game/online')
 
-    # GET 요청 (화면)
     current_name = (session.get('game_nickname') or '').strip()
 
     status = (
