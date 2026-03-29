@@ -1102,6 +1102,11 @@ def on_cast_vote(data):
             socketio.emit("vote_result",{"msg":msg,"exiled":exiled,"victory":None},room=code)
 
 # ── 온라인 HTTP ──
+@app.route('/game/ad-gate')
+def game_ad_gate():
+    next_url = request.args.get('next', '/game/online')
+    return render_template('game_ad_gate.html', next_url=next_url)
+
 @app.route('/game/online', methods=['GET'])
 def game_online_home():
     player_id = get_player_id()
@@ -1590,6 +1595,12 @@ def game_nickname():
 
     if request.method == 'POST':
         nickname = request.form.get('nickname', '').strip()
+        mode = request.form.get('mode', 'ad')
+
+        if mode == 'skip':
+            # IP로 플레이: 닉네임 없이 바로 진행
+            session.pop('game_nickname', None)
+            return redirect('/game/online')
 
         if not nickname:
             return render_online_shell(
@@ -1607,7 +1618,7 @@ def game_nickname():
 
         current_nickname = get_active_nickname(player_id)
 
-        # 내가 이미 활성 닉네임을 갖고 있으면:
+        # 이미 내 닉네임이 있으면:
         # 같은 닉네임 재입력은 허용, 다른 닉네임 새 생성은 차단
         if current_nickname:
             if current_nickname == nickname:
@@ -1644,7 +1655,9 @@ def game_nickname():
 
         save_or_activate_nickname(player_id, nickname)
         session['game_nickname'] = nickname
-        return redirect('/game/online')
+
+        # 닉네임 저장 후 광고 게이트로 이동
+        return redirect('/game/ad-gate?next=/game/online')
 
     current_name = (session.get('game_nickname') or '').strip()
 
@@ -1665,14 +1678,26 @@ def game_nickname():
         <div class="form-box">
             <form method="POST" style="display:grid; gap:14px;">
                 <input class="input" name="nickname" placeholder="닉네임 입력" maxlength="20">
-                <button class="action-btn btn-blue" type="submit">닉네임 저장</button>
+
+                <button class="action-btn btn-blue" type="submit" name="mode" value="ad">
+                    닉네임 저장 (광고 후 플레이)
+                </button>
+
+                <button class="action-btn btn-orange" type="submit" name="mode" value="skip">
+                    IP로 플레이
+                </button>
             </form>
+        </div>
+
+        <div class="note">
+            닉네임으로 플레이하면 광고를 한 번 본 뒤 진행됩니다.<br>
+            IP로 플레이는 광고 없이 바로 진행됩니다.
         </div>
     '''
 
     return render_online_shell(
         "닉네임 설정",
-        "여기서만 닉네임을 만들고 중복을 검사합니다.",
+        "닉네임을 만들거나, IP로 바로 플레이할 수 있어요.",
         inner_html
     )
 
