@@ -577,74 +577,6 @@ def complaint_write():
 def privacy():
     return render_template('privacy.html')
 
-@app.route('/store')
-def store():
-    points = 0
-    purchase_history = []
-    if session.get('user'):
-        db = get_db()
-        total = db.execute(
-            'SELECT SUM(amount) FROM rewards WHERE username = ?', (session['user'],)
-        ).fetchone()[0] or 0
-        spent = db.execute(
-            'SELECT SUM(amount) FROM purchases WHERE username = ? AND method = ?', (session['user'], '포인트')
-        ).fetchone()[0] or 0
-        points = total - spent
-        purchase_history = db.execute(
-            'SELECT * FROM purchases WHERE username = ? ORDER BY id DESC LIMIT 20', (session['user'],)
-        ).fetchall()
-        db.close()
-    return render_template('store.html', items=STORE_ITEMS, points=points, purchase_history=purchase_history)
-
-@app.route('/store/buy/points/<int:item_id>', methods=['POST'])
-def buy_with_points(item_id):
-    if not session.get('user'):
-        flash('로그인 후 구매할 수 있습니다.', 'error')
-        return redirect(url_for('login'))
-    item = next((i for i in STORE_ITEMS if i['id'] == item_id), None)
-    if not item or item['payment'] == 'cash':
-        flash('잘못된 요청입니다.', 'error')
-        return redirect(url_for('store'))
-    db = get_db()
-    total = db.execute(
-        'SELECT SUM(amount) FROM rewards WHERE username = ?', (session['user'],)
-    ).fetchone()[0] or 0
-    spent = db.execute(
-        'SELECT SUM(amount) FROM purchases WHERE username = ? AND method = ?', (session['user'], '포인트')
-    ).fetchone()[0] or 0
-    balance = total - spent
-    if balance < item['points_price']:
-        flash(f'포인트가 부족합니다. (보유: {balance}P / 필요: {item["points_price"]}P)', 'error')
-        db.close()
-        return redirect(url_for('store'))
-    db.execute(
-        'INSERT INTO purchases (username, item_id, item_name, method, amount, created) VALUES (?, ?, ?, ?, ?, ?)',
-        (session['user'], item_id, item['name'], '포인트', str(item['points_price']) + 'P',
-         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    )
-    db.commit()
-    db.close()
-    flash(f'🎉 [{item["name"]}] 구매 완료! ({item["points_price"]}P 차감)', 'success')
-    return redirect(url_for('store'))
-
-@app.route('/store/buy/cash/<int:item_id>', methods=['POST'])
-def buy_with_cash(item_id):
-    if not session.get('user'):
-        flash('로그인 후 구매할 수 있습니다.', 'error')
-        return redirect(url_for('login'))
-    item = next((i for i in STORE_ITEMS if i['id'] == item_id), None)
-    if not item or item['payment'] == 'points' or not item['cash_price']:
-        flash('잘못된 요청입니다.', 'error')
-        return redirect(url_for('store'))
-    # ================================================================
-    # 토스페이먼츠 연동 위치
-    # 실제 결제 연동 시 아래 주석을 풀고 API 키를 입력하세요.
-    # TOSS_CLIENT_KEY = "test_ck_XXXXXXXXXXXXXXXX"
-    # 현재는 미연동 상태로 결제 대기 안내만 표시합니다.
-    # ================================================================
-    flash(f'💳 [{item["name"]}] 현금 결제는 현재 PG사 연동 준비 중입니다. 포인트로 구매해 주세요.', 'error')
-    return redirect(url_for('store'))
-
 @app.route('/sitemap')
 def sitemap():
     pages = [
@@ -667,12 +599,6 @@ def sitemap():
             {'name': '민원의 처리과정', 'url': '/complaint/process'},
             {'name': '민원 작성', 'url': '/complaint/write'},
         ]},
-        {'category': '광고 & 리워드', 'links': [
-            {'name': 'Advertisement for Reward', 'url': '/advertisement'},
-        ]},
-        {'category': '스토어', 'links': [
-            {'name': '스토어', 'url': '/store'},
-        ]},
         {'category': '개인정보', 'links': [
             {'name': '개인정보 처리방침', 'url': '/privacy'},
         ]},
@@ -681,33 +607,6 @@ def sitemap():
         ]},
     ]
     return render_template('sitemap.html', pages=pages)
-
-@app.route('/advertisement')
-def advertisement():
-    reward_history = []
-    if session.get('user'):
-        db = get_db()
-        reward_history = db.execute(
-            'SELECT * FROM rewards WHERE username = ? ORDER BY id DESC LIMIT 10',
-            (session['user'],)
-        ).fetchall()
-        db.close()
-    return render_template('advertisement.html', reward_history=reward_history)
-
-@app.route('/advertisement/claim', methods=['POST'])
-def claim_reward():
-    if not session.get('user'):
-        flash('로그인 후 리워드를 받을 수 있습니다.', 'error')
-        return redirect(url_for('advertisement'))
-    db = get_db()
-    db.execute(
-        'INSERT INTO rewards (username, amount, created) VALUES (?, ?, ?)',
-        (session['user'], 10, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    )
-    db.commit()
-    db.close()
-    flash('🎉 리워드 10포인트가 지급되었습니다!', 'success')
-    return redirect(url_for('advertisement'))
 
 @app.route('/developer', methods=['GET', 'POST'])
 def developer_mode():
