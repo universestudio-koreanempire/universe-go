@@ -35,22 +35,23 @@
 
     <!-- 하단 탭바 -->
     <nav class="bottom-tab-bar">
-        <a href="{{ url_for('index') }}" class="tab-item {% if request.endpoint == 'index' %}active{% endif %}">
-            <span class="tab-icon">🏠</span>
-            <span class="tab-label">홈</span>
-        </a>
-        <a href="{{ url_for('notices_list') }}" class="tab-item {% if 'notice' in request.endpoint %}active{% endif %}">
-            <span class="tab-icon">📢</span>
-            <span class="tab-label">공지</span>
-        </a>
-        <a href="/game" class="tab-item tab-center-btn">
-            <span class="tab-icon">🕵️</span>
-            <span class="tab-label">게임</span>
-        </a>
-        <a href="{{ url_for('sitemap') }}" class="tab-item {% if request.endpoint == 'sitemap' %}active{% endif %}">
-            <span class="tab-icon">☰</span>
-            <span class="tab-label">전체보기</span>
-        </a>
+    <a href="{{ url_for('notices_list') }}"
+       class="tab-item {% if request.endpoint == 'notices_list' or request.endpoint == 'notice_detail' %}active{% endif %}">
+        <span class="tab-icon">📢</span>
+        <span class="tab-label">공지</span>
+    </a>
+
+    <a href="{{ url_for('index') }}"
+       class="tab-item home-tab {% if request.endpoint == 'index' %}active{% endif %}">
+        <span class="tab-icon">🏠</span>
+        <span class="tab-label">홈</span>
+    </a>
+
+    <a href="{{ url_for('sitemap') }}"
+       class="tab-item {% if request.endpoint == 'sitemap' %}active{% endif %}">
+        <span class="tab-icon">📂</span>
+        <span class="tab-label">전체보기</span>
+    </a>
     </nav>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
