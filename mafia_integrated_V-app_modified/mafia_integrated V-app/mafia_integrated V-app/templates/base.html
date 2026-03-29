@@ -47,10 +47,6 @@
             <span class="tab-icon">🕵️</span>
             <span class="tab-label">게임</span>
         </a>
-        <a href="{{ url_for('store') }}" class="tab-item {% if request.endpoint == 'store' %}active{% endif %}">
-            <span class="tab-icon">🛒</span>
-            <span class="tab-label">스토어</span>
-        </a>
         <a href="{{ url_for('sitemap') }}" class="tab-item {% if request.endpoint == 'sitemap' %}active{% endif %}">
             <span class="tab-icon">☰</span>
             <span class="tab-label">전체보기</span>
