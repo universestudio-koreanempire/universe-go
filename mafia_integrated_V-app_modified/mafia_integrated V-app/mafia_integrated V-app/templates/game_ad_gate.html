@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>광고 보고 이동</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .ad-gate-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: #f2f2f7;
+        }
+        .ad-gate-card {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            padding: 24px;
+            text-align: center;
+        }
+        .ad-box {
+            margin-top: 18px;
+            min-height: 250px;
+            border-radius: 14px;
+            border: 2px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            background: #fafafa;
+            padding: 12px;
+        }
+        .ad-actions {
+            margin-top: 18px;
+            display: grid;
+            gap: 10px;
+        }
+        .countdown {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        .ad-note {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #777;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="ad-gate-wrap">
+        <div class="ad-gate-card">
+            <h2>광고를 본 뒤 진행됩니다</h2>
+            <p style="margin-top:10px; color:#666;">
+                잠시 후 게임 화면으로 이동합니다.
+            </p>
+
+            <div class="ad-box">
+                <!-- 여기에 Google Ads 코드 삽입 -->
+                Google Ads 영역
+            </div>
+
+            <div class="countdown">
+                <span id="count">5</span>초 후 이동
+            </div>
+
+            <div class="ad-note">
+                광고가 로드되지 않아도 시간이 지나면 다음 화면으로 이동합니다.
+            </div>
+
+            <div class="ad-actions">
+                <button class="action-btn btn-blue" onclick="goNext()">바로 이동</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let left = 5;
+        const nextUrl = "{{ next_url }}";
+
+        const timer = setInterval(() => {
+            left -= 1;
+            document.getElementById("count").innerText = left;
+            if (left <= 0) {
+                clearInterval(timer);
+                window.location.href = nextUrl;
+            }
+        }, 1000);
+
+        function goNext() {
+            window.location.href = nextUrl;
+        }
+    </script>
+</body>
+</html>
