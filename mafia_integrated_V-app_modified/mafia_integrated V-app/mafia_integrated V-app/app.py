@@ -738,8 +738,8 @@ def game_online_home():
             )
 
         # 닉네임 등록
-        active_nicknames[player_id] = nickname
         session['game_nickname'] = nickname
+        session['use_ip_mode'] = False
 
         return redirect('/game/online')
 
@@ -1107,49 +1107,84 @@ def game_ad_gate():
     next_url = request.args.get('next', '/game/online')
     return render_template('game_ad_gate.html', next_url=next_url)
 
-@app.route('/game/online', methods=['GET'])
+@app.route('/game/online', methods=['GET', 'POST'])
 def game_online_home():
     player_id = get_player_id()
+    use_ip_mode = session.get('use_ip_mode', False)
+
     current_name = (session.get('game_nickname') or '').strip()
 
-    if not current_name and player_id in active_nicknames:
-        current_name = active_nicknames[player_id]
-        session['game_nickname'] = current_name
-
-    if not current_name:
+    # 🔥 핵심: 닉네임도 없고 IP 모드도 아니면 닉네임 페이지로
+    if not current_name and not use_ip_mode:
         return redirect('/game/nickname')
 
-    status = (
-        f'<div style="text-align:center; margin-top: 14px; color:#dbeafe; font-size:18px;">'
-        f'현재 닉네임: <b style="color:#fff">{current_name}</b>'
-        f'</div>'
-    )
+    # 🔥 상태 표시
+    if current_name:
+        status = f'''
+        <div style="text-align:center; margin-top:14px; color:#dbeafe; font-size:18px;">
+            현재 닉네임: <b style="color:#fff">{current_name}</b>
+        </div>
+        '''
+    elif use_ip_mode:
+        status = '''
+        <div style="text-align:center; margin-top:14px; color:#dbeafe; font-size:18px;">
+            현재 방식: <b style="color:#fff">IP로 플레이</b>
+        </div>
+        '''
+    else:
+        status = '''
+        <div style="text-align:center; margin-top:14px; color:#dbeafe; font-size:18px;">
+            현재 닉네임 없음
+        </div>
+        '''
 
+    # 🔥 UI 구성
     inner_html = f'''
         <div class="status-box">
             {status}
         </div>
 
-        <div class="section-title">Nickname</div>
-        <div class="form-box">
-            <button class="action-btn btn-blue" type="button" onclick="location.href='/game/nickname'">닉네임 설정 / 변경</button>
+        <div class="section-title">Game Mode</div>
+        <div class="card-grid">
+
+            <button class="action-btn btn-blue"
+                onclick="location.href='/game/create_code'">
+                초대코드 만들기
+            </button>
+
+            <button class="action-btn btn-purple"
+                onclick="location.href='/game/join_code'">
+                초대코드로 참여
+            </button>
+
+            <button class="action-btn btn-green"
+                onclick="location.href='/game/create_server'">
+                서버 만들기
+            </button>
+
+            <button class="action-btn btn-orange"
+                onclick="location.href='/game/online_join'">
+                서버 목록
+            </button>
+
         </div>
 
-        <div class="section-title" style="margin-top:24px;">Game Mode</div>
-        <div class="card-grid">
-            <button class="action-btn btn-blue" onclick="location.href='/game/create_code'">초대코드 만들기</button>
-            <button class="action-btn btn-purple" onclick="location.href='/game/join_code'">초대코드로 참여</button>
-            <button class="action-btn btn-green" onclick="location.href='/game/create_server'">서버 만들기</button>
-            <button class="action-btn btn-orange" onclick="location.href='/game/online_join'">서버 목록</button>
+        <div class="section-title" style="margin-top:24px;">Player</div>
+        <div class="form-box">
+
+            <button class="action-btn btn-blue"
+                onclick="location.href='/game/nickname'">
+                닉네임 설정 / 변경
+            </button>
+
         </div>
     '''
 
     return render_online_shell(
         "온라인 게임 입장",
-        "닉네임을 정한 뒤, 초대코드나 서버 목록으로 들어갈 수 있어요.",
+        "닉네임 또는 IP 방식으로 게임을 시작할 수 있어요.",
         inner_html
     )
-
 @app.route('/game/create_server', methods=['GET', 'POST'])
 def game_create_server():
     if request.method == 'POST':
@@ -1255,6 +1290,7 @@ def game_join(code):
     ip = get_player_id()
 
     nickname = (session.get('game_nickname') or '').strip()
+    use_ip_mode = session.get('use_ip_mode', False)
 
     if code not in invite_ips:
         return render_online_shell(
@@ -1263,12 +1299,13 @@ def game_join(code):
             "<div class='note'>코드를 확인해주세요.</div>"
         )
 
-    if not nickname:
+    # 닉네임도 없고 IP 모드도 아니면 nickname 페이지로
+    if not nickname and not use_ip_mode:
         return render_online_shell(
             "오류",
-            "닉네임이 설정되지 않았습니다.",
+            "플레이 방식이 설정되지 않았습니다.",
             '''
-            <div class="note">닉네임을 먼저 설정해주세요.</div>
+            <div class="note">닉네임을 설정하거나 IP로 플레이를 선택해주세요.</div>
             <div style="text-align:center; margin-top:20px;">
                 <button class="action-btn btn-blue" onclick="location.href='/game/nickname'">
                     닉네임 설정으로 이동
@@ -1277,22 +1314,23 @@ def game_join(code):
             '''
         )
 
-    # 세션에 닉네임이 있고, 다른 활성 플레이어가 쓰고 있지 않으면 다시 활성화
-    if is_nickname_in_use(nickname, exclude_player_id=ip):
-        return render_online_shell(
-            "오류",
-            "이미 사용 중인 닉네임입니다.",
-            f'''
-            <div class="note">[{nickname}] 은(는) 이미 다른 플레이어가 사용 중입니다.</div>
-            <div style="text-align:center; margin-top:20px;">
-                <button class="action-btn btn-red" onclick="location.href='/game/nickname'">
-                    닉네임 다시 설정
-                </button>
-            </div>
-            '''
-        )
+    # 닉네임 플레이라면 DB 활성화 유지
+    if nickname:
+        if is_nickname_in_use(nickname, exclude_player_id=ip):
+            return render_online_shell(
+                "오류",
+                "이미 사용 중인 닉네임입니다.",
+                f'''
+                <div class="note">[{nickname}] 은(는) 이미 다른 플레이어가 사용 중입니다.</div>
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="action-btn btn-red" onclick="location.href='/game/nickname'">
+                        닉네임 다시 설정
+                    </button>
+                </div>
+                '''
+            )
 
-    save_or_activate_nickname(ip, nickname)
+        save_or_activate_nickname(ip, nickname)
 
     if ip not in invite_ips[code]:
         invite_ips[code].append(ip)
@@ -1598,8 +1636,8 @@ def game_nickname():
         mode = request.form.get('mode', 'ad')
 
         if mode == 'skip':
-            # IP로 플레이: 닉네임 없이 바로 진행
             session.pop('game_nickname', None)
+            session['use_ip_mode'] = True   # ⭐ 이거 추가
             return redirect('/game/online')
 
         if not nickname:
