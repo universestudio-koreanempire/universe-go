@@ -34,7 +34,7 @@
     </main>
 
     <!-- 하단 탭바 -->
-    <nav class="bottom-tab-bar">
+<nav class="bottom-tab-bar">
     <a href="{{ url_for('notices_list') }}"
        class="tab-item {% if request.endpoint == 'notices_list' or request.endpoint == 'notice_detail' %}active{% endif %}">
         <span class="tab-icon">📢</span>
@@ -52,7 +52,7 @@
         <span class="tab-icon">📂</span>
         <span class="tab-label">전체보기</span>
     </a>
-    </nav>
+</nav>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
