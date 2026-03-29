@@ -245,6 +245,15 @@ def init_db():
         )
     ''')
 
+    cur.execute('''
+    CREATE TABLE IF NOT EXISTS online_nicknames (
+        player_id  TEXT PRIMARY KEY,
+        nickname   TEXT NOT NULL,
+        is_active  INTEGER NOT NULL DEFAULT 1,
+        updated_at TEXT NOT NULL
+    )
+''')
+
     cur.execute('SELECT COUNT(*) FROM notices')
     if cur.fetchone()[0] == 0:
         default_notices = [
@@ -261,6 +270,76 @@ def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+def get_active_nickname(player_id):
+    db = get_db()
+    row = db.execute(
+        'SELECT nickname FROM online_nicknames WHERE player_id = ? AND is_active = 1',
+        (player_id,)
+    ).fetchone()
+    db.close()
+    return row['nickname'] if row else None
+
+
+def is_nickname_in_use(nickname, exclude_player_id=None):
+    db = get_db()
+
+    if exclude_player_id:
+        row = db.execute(
+            '''
+            SELECT 1
+            FROM online_nicknames
+            WHERE nickname = ? AND is_active = 1 AND player_id != ?
+            LIMIT 1
+            ''',
+            (nickname, exclude_player_id)
+        ).fetchone()
+    else:
+        row = db.execute(
+            '''
+            SELECT 1
+            FROM online_nicknames
+            WHERE nickname = ? AND is_active = 1
+            LIMIT 1
+            ''',
+            (nickname,)
+        ).fetchone()
+
+    db.close()
+    return row is not None
+
+
+def save_or_activate_nickname(player_id, nickname):
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    db = get_db()
+    db.execute(
+        '''
+        INSERT INTO online_nicknames (player_id, nickname, is_active, updated_at)
+        VALUES (?, ?, 1, ?)
+        ON CONFLICT(player_id) DO UPDATE SET
+            nickname = excluded.nickname,
+            is_active = 1,
+            updated_at = excluded.updated_at
+        ''',
+        (player_id, nickname, now)
+    )
+    db.commit()
+    db.close()
+
+
+def deactivate_nickname(player_id):
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    db = get_db()
+    db.execute(
+        '''
+        UPDATE online_nicknames
+        SET is_active = 0, updated_at = ?
+        WHERE player_id = ?
+        ''',
+        (now, player_id)
+    )
+    db.commit()
+    db.close()
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
