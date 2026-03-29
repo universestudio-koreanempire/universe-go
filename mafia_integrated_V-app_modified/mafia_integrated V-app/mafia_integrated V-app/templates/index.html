@@ -29,29 +29,42 @@
 </section>
 
 <!-- 빠른 메뉴 그리드 -->
-<section class="app-section">
-    <div class="app-section-header">
-        <h2 class="app-section-title">빠른 메뉴</h2>
-    </div>
-    <div class="app-quick-grid">
-        <a href="{{ url_for('company') }}" class="app-quick-card">
-            <div class="app-quick-icon">🏢</div>
-            <span class="app-quick-label">회사 소개</span>
-        </a>
-        <a href="{{ url_for('complaint') }}" class="app-quick-card">
-            <div class="app-quick-icon">📝</div>
-            <span class="app-quick-label">민원 신청</span>
-        </a>
-        <a href="{{ url_for('privacy') }}" class="app-quick-card">
-            <div class="app-quick-icon">🔒</div>
-            <span class="app-quick-label">개인정보</span>
-        </a>
-        <a href="{{ url_for('sitemap') }}" class="app-quick-card">
-            <div class="app-quick-icon">☰</div>
-            <span class="app-quick-label">전체보기</span>
-        </a>
-    </div>
-</section>
+<div class="app-quick-grid">
+
+    <!-- ⭐ 추가 1: 게임 -->
+    <a href="{{ url_for('game_home') }}" class="app-quick-card">
+        <div class="app-quick-icon">🎮</div>
+        <span class="app-quick-label">게임</span>
+    </a>
+
+    <!-- ⭐ 추가 2: 공지사항 -->
+    <a href="{{ url_for('notices_list') }}" class="app-quick-card">
+        <div class="app-quick-icon">📢</div>
+        <span class="app-quick-label">공지사항</span>
+    </a>
+
+    <!-- 기존 -->
+    <a href="{{ url_for('company') }}" class="app-quick-card">
+        <div class="app-quick-icon">🏢</div>
+        <span class="app-quick-label">회사 소개</span>
+    </a>
+
+    <a href="{{ url_for('complaint') }}" class="app-quick-card">
+        <div class="app-quick-icon">📝</div>
+        <span class="app-quick-label">민원 신청</span>
+    </a>
+
+    <a href="{{ url_for('privacy') }}" class="app-quick-card">
+        <div class="app-quick-icon">🔒</div>
+        <span class="app-quick-label">개인정보</span>
+    </a>
+
+    <a href="{{ url_for('sitemap') }}" class="app-quick-card">
+        <div class="app-quick-icon">☰</div>
+        <span class="app-quick-label">전체보기</span>
+    </a>
+
+</div>
 
 <!-- 공지사항 -->
 <section class="app-section">
