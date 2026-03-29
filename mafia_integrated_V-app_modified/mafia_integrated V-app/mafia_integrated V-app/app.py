@@ -1182,7 +1182,7 @@ def game_online_home():
 
     return render_online_shell(
         "온라인 게임 입장",
-        "닉네임 또는 IP 방식으로 게임을 시작할 수 있어요.",
+        "환상적인 플레이를 즐겨보세요!",
         inner_html
     )
 @app.route('/game/create_server', methods=['GET', 'POST'])
