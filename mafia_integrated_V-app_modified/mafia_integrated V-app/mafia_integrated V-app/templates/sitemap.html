@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}전체보기 - {{ site_name }}{% endblock %}
+{% block content %}
+
+<!-- 페이지 헤더 -->
+<div class="app-page-header">
+    <h1 class="app-page-header-title">☰ 전체보기</h1>
+    <p class="app-page-header-sub">{{ site_name }}의 모든 메뉴</p>
+</div>
+
+<div class="app-page-body">
+    {% for section in pages %}
+    <div class="app-section" style="margin-bottom:12px;">
+        <div class="app-section-header">
+            <h2 class="app-section-title">{{ section.category }}</h2>
+        </div>
+        <ul class="app-sitemap-list">
+            {% for link in section.links %}
+            <li>
+                <a href="{{ link.url }}" class="app-sitemap-item">
+                    <span class="app-sitemap-arrow">→</span>
+                    <span class="app-sitemap-name">{{ link.name }}</span>
+                    <span class="app-sitemap-chevron">›</span>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+</div>
+
+<div style="height:80px;"></div>
+{% endblock %}

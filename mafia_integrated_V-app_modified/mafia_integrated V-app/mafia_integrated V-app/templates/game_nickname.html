@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}닉네임 설정{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 40px auto; padding: 20px;">
+    <h2 style="margin-bottom: 16px;">온라인 게임 닉네임 설정</h2>
+    <p style="margin-bottom: 20px;">닉네임을 입력하면 그 이름으로 표시돼요. 비워 두면 IP로 식별됩니다.</p>
+
+    <form method="POST" style="display: grid; gap: 12px;">
+        <input
+            type="text"
+            name="nickname"
+            placeholder="닉네임 입력"
+            maxlength="20"
+            style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;"
+        >
+
+        <button type="submit" style="padding: 12px; border: none; border-radius: 8px; cursor: pointer;">
+            닉네임으로 입장
+        </button>
+    </form>
+
+    <form method="POST" style="margin-top: 12px;">
+        <input type="hidden" name="nickname" value="">
+        <button type="submit" style="width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer;">
+            닉네임 없이 입장
+        </button>
+    </form>
+</div>
+{% endblock %}

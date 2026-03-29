@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}경영진 인사말 - Mafia GO!{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>경영진 인사말</h1>
+    <p>대표이사의 메시지를 전합니다</p>
+</div>
+<nav class="sub-nav">
+    <a href="{{ url_for('greeting') }}" class="active">경영진 인사말</a>
+    <a href="{{ url_for('principles') }}">운영 원칙</a>
+    <a href="{{ url_for('company_info') }}">회사 정보</a>
+</nav>
+<div class="content-page fade-up">
+    <h2>대표이사 인사말</h2>
+    <p>안녕하세요. 유니버스 Mafia GO! 대표이사입니다.</p>
+    <p>저희 유니버스는 고객 여러분의 신뢰와 사랑 덕분에 지금까지 성장해 올 수 있었습니다. 항상 고객의 입장에서 생각하고, 최선의 서비스를 제공하기 위해 끊임없이 노력하겠습니다.</p>
+    <p>투명하고 공정한 운영을 통해 여러분 모두가 믿고 이용할 수 있는 플랫폼이 되겠습니다. 앞으로도 변함없는 관심과 지지를 부탁드립니다.</p>
+    <p style="text-align: right; font-weight: 700; color: var(--green-dark); margin-top: 32px;">유니버스 Mafia GO! 대표이사 드림</p>
+</div>
+{% endblock %}

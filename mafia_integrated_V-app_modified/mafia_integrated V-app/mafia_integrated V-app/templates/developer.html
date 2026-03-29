@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}개발자 모드{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 500px; margin: 40px auto;">
+    <h2>개발자 모드</h2>
+
+    <form method="POST">
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" required style="width: 100%; padding: 10px; margin: 10px 0;">
+
+        <button type="submit" class="btn btn-primary">입장</button>
+    </form>
+</div>
+{% endblock %}
