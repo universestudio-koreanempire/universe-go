@@ -1080,19 +1080,28 @@ a { text-decoration: none; color: inherit; }
     top: -14px;
     background: var(--green-primary);
     color: white !important;
+
     width: 58px;
     height: 58px;
     border-radius: 50%;
+
     box-shadow: 0 6px 20px rgba(61,179,69,0.5);
+
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+
     z-index: 10;
-    flex: 0 0 58px;
 }
-.tab-center-btn .tab-icon { font-size: 1.6rem; }
-.tab-center-btn .tab-label { font-size: 0.55rem; }
+
+.tab-center-btn .tab-icon {
+    font-size: 1.6rem;
+}
+
+.tab-center-btn .tab-label {
+    font-size: 0.55rem;
+}
 
 /* ── 사각형 광고 모바일 비율 수정 ── */
 .app-square-ads {
