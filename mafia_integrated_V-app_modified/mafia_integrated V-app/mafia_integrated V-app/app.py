@@ -372,10 +372,6 @@ def index():
 def ai_chat():
     return render_template('ai_chat.html')
 
-@app.route('/ai-chat')
-def ai_chat():
-    return render_template('ai_chat.html')
-
 @app.route('/ai-chat/chat', methods=['POST'])
 def ai_chat_api():
     user_ip = request.remote_addr
@@ -529,10 +525,6 @@ HERO_ANIMATION = """
 }
 </style>
 """
-
-@app.route('/ai-chat')
-def ai_chat():
-    return render_template('ai_chat.html')
 
 @app.route('/company')
 def company():
