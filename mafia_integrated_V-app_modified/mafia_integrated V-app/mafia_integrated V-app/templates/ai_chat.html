@@ -183,8 +183,8 @@ async function send() {
   messages.push({ role: "user", content: msg });
 
   try {
-    const res = await fetch("/chat", {
-      method: "POST",
+const res = await fetch("/ai-chat/chat", {
+    method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
