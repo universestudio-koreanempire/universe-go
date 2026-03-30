@@ -1103,6 +1103,47 @@ a { text-decoration: none; color: inherit; }
     font-size: 0.55rem;
 }
 
+/* ── 우측 하단 AI Chat 플로팅 버튼 ── */
+.floating-ai-chat {
+    position: fixed;
+    right: calc(50% - 240px + 16px);
+    bottom: 78px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    z-index: 350;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: block;
+    background: transparent;
+}
+
+.floating-ai-chat img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.floating-ai-chat:hover {
+    transform: scale(1.06);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+}
+
+.floating-ai-chat:active {
+    transform: scale(0.96);
+}
+
+@media (max-width: 480px) {
+    .floating-ai-chat {
+        right: 16px;
+        bottom: 78px;
+        width: 64px;
+        height: 64px;
+    }
+}
+
 /* ── 사각형 광고 모바일 비율 수정 ── */
 .app-square-ads {
     display: flex;
