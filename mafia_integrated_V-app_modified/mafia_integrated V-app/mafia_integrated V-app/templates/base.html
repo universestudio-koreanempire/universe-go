@@ -42,18 +42,18 @@
     </a>
 
     <a href="{{ url_for('index') }}"
-       class="tab-item home-tab {% if request.endpoint == 'index' %}active{% endif %}">
+       class="tab-item tab-center-btn {% if request.endpoint == 'index' %}active{% endif %}">
         <span class="tab-icon">🏠</span>
         <span class="tab-label">홈</span>
     </a>
 
     <a href="{{ url_for('sitemap') }}"
        class="tab-item {% if request.endpoint == 'sitemap' %}active{% endif %}">
-        <span class="tab-icon">📂</span>
+        <span class="tab-icon">☰</span>
         <span class="tab-label">전체보기</span>
     </a>
 </nav>
-
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
