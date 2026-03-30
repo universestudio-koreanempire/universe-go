@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
-from datetime import datetime
+from datetime import datetime, date
 import sqlite3
 import hashlib
 import os
@@ -166,6 +166,13 @@ def render_online_shell(title, subtitle, inner_html):
     </body>
     </html>
     '''
+
+usage = {}
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+SYSTEM_PROMPT = "모르는 건 모른다고 말하고, 필요하면 문의 기능을 이용하라고 안내해줘."
 
 # ===== 관리자 계정 설정 =====
 # 관리자 아이디를 여기에 추가하세요. 여러 명 지정 가능.
@@ -359,6 +366,62 @@ def index():
     return render_template('index.html', notices=notices,
                            ad_panorama=AD_PANORAMA,
                            hero_animation=HERO_ANIMATION, hero_title=HERO_TITLE)
+
+@app.route('/ai-chat')
+def ai_chat():
+    return render_template('ai_chat.html')
+
+@app.route('/ai-chat')
+def ai_chat():
+    return render_template('ai_chat.html')
+
+@app.route('/ai-chat/chat', methods=['POST'])
+def ai_chat_api():
+    user_ip = request.remote_addr
+    today = str(date.today())
+
+    if user_ip not in usage:
+        usage[user_ip] = {}
+
+    if today not in usage[user_ip]:
+        usage[user_ip][today] = 0
+
+    if usage[user_ip][today] >= 20:
+        return jsonify({
+            "reply": "⚠️ 하루 사용량 20회를 초과했어요. 내일 다시 시도해주세요."
+        })
+
+    if not OPENAI_API_KEY:
+        return jsonify({
+            "reply": "서비스 점검중입니다. 나중에 다시 시도해주십시오."
+        }), 500
+
+    data = request.get_json(silent=True) or {}
+    messages = data.get("messages", [])
+
+    if not isinstance(messages, list):
+        return jsonify({
+            "reply": "⚠️ messages 형식이 올바르지 않아요."
+        }), 400
+
+    if not messages or messages[0].get("role") != "system":
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
+
+    usage[user_ip][today] += 1
+
+    try:
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+        )
+
+        reply = completion.choices[0].message.content or ""
+        return jsonify({"reply": reply})
+
+    except Exception as e:
+        return jsonify({
+            "reply": f"⚠️ OpenAI 호출 실패: {str(e)}"
+        }), 500
 
 # ===== 사이트 이름 설정 =====
 SITE_NAME = "Universe Studio"   # 네비게이션, 푸터 로고에 표시되는 이름
