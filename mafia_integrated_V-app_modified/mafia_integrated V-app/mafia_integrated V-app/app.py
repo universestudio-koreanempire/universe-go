@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from datetime import datetime, date
+from openai import OpenAI
 import sqlite3
 import hashlib
 import os
