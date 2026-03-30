@@ -466,6 +466,10 @@ HERO_ANIMATION = """
 </style>
 """
 
+@app.route('/ai-chat')
+def ai_chat():
+    return render_template('ai_chat.html')
+
 @app.route('/company')
 def company():
     return render_template('company.html')
