@@ -731,7 +731,6 @@ night_phase      = {}
 night_results    = {}
 result_confirmed = {}
 day_votes        = {}
-ready_players    = {}
 HEARTBEAT_TIMEOUT = 3
 
 # ── 오프라인 상태 ──
@@ -856,7 +855,7 @@ def get_active_players(code):
         return active
 
     for player_id, last_seen in list(heartbeats[code].items()):
-        if now - last_seen < HEARTBEAT_TIMEOUT:
+        if now - last_seen < 1:
             active.append(player_id)
         else:
             del heartbeats[code][player_id]
@@ -882,6 +881,8 @@ def reset_online_game(code):
     day_votes.pop(code, None)
     heartbeats[code]   = {}
     ready_players[code] = set()
+    game_launching[code] = False
+    launch_players[code] = []
 
 def check_victory(code):
     all_players   = invite_ips.get(code, [])
@@ -899,7 +900,7 @@ def ingame_socket_js(code):
     return f"""{SOCKETIO_SCRIPT}
     <script>
         var socket = io();
-        socket.emit("join_room", {{code: "{code}"}});
+        socket.emit("join_room", {code: "{code}"});
 
         function sendHeartbeat() {{
             socket.emit("heartbeat", {{code: "{code}"}});
@@ -983,6 +984,11 @@ def waiting_room_html(title, code, start_url):
         }}
 
         function readyStart() {{
+            var btn = document.getElementById("start_btn");
+            btn.disabled = true;
+            btn.style.opacity = "0.6";
+            btn.innerText = "준비 완료";
+
             fetch("/game/ready_start/{code}", {{method:"POST"}})
             .then(r => r.json())
             .then(data => {{
@@ -1140,13 +1146,10 @@ def on_join(data):
 
 @socketio.on("chat_message")
 def on_chat(data):
-    code = data.get("code")
-    player_id = get_player_id()
-    sender = (session.get("game_nickname") or player_id)
+    code = data.get("code"); ip = session.get("user") or request.remote_addr
     msg  = data.get("msg","").strip()[:200]
-    if not code or not msg:
-        return
-    socketio.emit("chat_message", {"ip": player_id, "name": sender, "msg": msg}, room=code)
+    if not code or not msg: return
+    socketio.emit("chat_message",{"ip":ip,"msg":msg},room=code)
 
 @socketio.on("heartbeat")
 def on_heartbeat(data):
@@ -1158,7 +1161,7 @@ def on_heartbeat(data):
         heartbeats[code] = {}
     heartbeats[code][player_id] = time.time()
     if code in invite_ips and invite_ips[code]:
-        if night_phase.get(code) == "done":
+        if night_phase.get(code) == "done" or game_launching.get(code, False):
             return
         now = time.time()
         all_online = [p for p in invite_ips[code] if (now - heartbeats.get(code, {}).get(p, 0)) < HEARTBEAT_TIMEOUT]
@@ -1168,61 +1171,49 @@ def on_heartbeat(data):
 
 @socketio.on("confirm_result")
 def on_confirm_result(data):
-    code = data.get("code")
-    player_id = get_player_id()
-    if not code:
-        return
-    if code not in result_confirmed:
-        result_confirmed[code] = set()
-    result_confirmed[code].add(player_id)
-    survivors = [p for p in invite_ips.get(code, []) if p not in dead_players.get(code, [])]
-    confirmed = result_confirmed.get(code, set())
+    code = data.get("code"); ip = session.get("user") or request.remote_addr
+    if not code: return
+    if code not in result_confirmed: result_confirmed[code] = set()
+    result_confirmed[code].add(ip)
+    survivors = [p for p in invite_ips.get(code,[]) if p not in dead_players.get(code,[])]
+    confirmed = result_confirmed.get(code,set())
     all_confirmed = all(p in confirmed for p in survivors)
-    socketio.emit("confirm_update", {"confirmed": len(confirmed), "total": len(survivors), "all_confirmed": all_confirmed}, room=code)
+    socketio.emit("confirm_update",{"confirmed":len(confirmed),"total":len(survivors),"all_confirmed":all_confirmed},room=code)
 
 @socketio.on("cast_vote")
 def on_cast_vote(data):
-    code = data.get("code")
-    target = data.get("target")
-    player_id = get_player_id()
-    if not code or not target:
-        return
-    if code not in day_votes:
-        day_votes[code] = {}
-    day_votes[code][player_id] = target
-    survivors = [p for p in invite_ips.get(code, []) if p not in dead_players.get(code, [])]
-    voted = [p for p in survivors if p in day_votes.get(code, {})]
-    socketio.emit("vote_update", {"voted": len(voted), "total": len(survivors)}, room=code)
+    code=data.get("code"); target=data.get("target"); ip=session.get("user") or request.remote_addr
+    if not code or not target: return
+    if code not in day_votes: day_votes[code] = {}
+    day_votes[code][ip] = target
+    survivors = [p for p in invite_ips.get(code,[]) if p not in dead_players.get(code,[])]
+    voted     = [p for p in survivors if p in day_votes.get(code,{})]
+    socketio.emit("vote_update",{"voted":len(voted),"total":len(survivors)},room=code)
     if len(voted) == len(survivors):
-        tally = Counter(day_votes[code][p] for p in survivors)
-        max_votes = max(tally.values())
-        top = [p for p, v in tally.items() if v == max_votes]
-        exiled = top[0] if len(top) == 1 else None
+        tally     = Counter(day_votes[code][p] for p in survivors)
+        max_votes = max(tally.values()); top = [p for p,v in tally.items() if v==max_votes]
+        exiled    = top[0] if len(top)==1 else None
         if exiled:
-            if code not in dead_players:
-                dead_players[code] = []
+            if code not in dead_players: dead_players[code]=[]
             dead_players[code].append(exiled)
             msg = f"{exiled}이(가) 추방되었습니다! ({max_votes}표)"
         else:
             msg = "동률로 아무도 추방되지 않았습니다."
-        day_votes.pop(code, None)
+        day_votes.pop(code,None)
         v = check_victory(code)
-        if v == "citizen_win":
-            socketio.emit("vote_result", {"msg": msg, "exiled": exiled, "victory": "citizen"}, room=code)
-        elif v == "mafia_win":
-            socketio.emit("vote_result", {"msg": msg, "exiled": exiled, "victory": "mafia"}, room=code)
+        if v=="citizen_win":   socketio.emit("vote_result",{"msg":msg,"exiled":exiled,"victory":"citizen"},room=code)
+        elif v=="mafia_win":   socketio.emit("vote_result",{"msg":msg,"exiled":exiled,"victory":"mafia"},room=code)
         else:
-            night_phase[code] = "mafia"
-            socketio.emit("vote_result", {"msg": msg, "exiled": exiled, "victory": None}, room=code)
+            night_phase[code]="mafia"
+            socketio.emit("vote_result",{"msg":msg,"exiled":exiled,"victory":None},room=code)
 
-# ── 온라인 HTTP ──
 # ── 온라인 HTTP ──
 @app.route('/game/ad-gate')
 def game_ad_gate():
     next_url = request.args.get('next', '/game/online')
     return render_template('game_ad_gate.html', next_url=next_url)
 
-@app.route('/game/online', methods=['GET'])
+@app.route('/game/online', methods=['GET', 'POST'])
 def game_online_home():
     player_id = get_player_id()
     use_ip_mode = session.get('use_ip_mode', False)
@@ -1365,15 +1356,26 @@ def game_ready_start(code):
     ready_count = len([p for p in active if p in ready_players[code]])
     started = all(p in ready_players[code] for p in active)
 
+    if started:
+        game_launching[code] = True
+        launch_players[code] = active[:]
+
     return jsonify({
         "started": started,
         "ready": ready_count,
         "total": len(active)
     })
 
-
 @app.route('/game/start_state/<code>')
 def game_start_state(code):
+    if game_launching.get(code, False):
+        players = launch_players.get(code, [])
+        return jsonify({
+            "started": True,
+            "ready": len(players),
+            "total": len(players)
+        })
+
     active = get_active_players(code)
 
     if code not in ready_players:
@@ -1561,29 +1563,30 @@ def game_wait(code):
 
 @app.route('/game/start/<code>')
 def game_start(code):
-    active = get_active_players(code)
+    if not game_launching.get(code, False):
+        return f"""<h2 style="text-align:center">아직 게임 시작이 확정되지 않았습니다.</h2>
+        {back_button_g(f'/game/wait/{code}','대기실로 돌아가기')}"""
+
+    active = launch_players.get(code, [])[:]
     invite_ips[code] = active
 
-    if code not in ready_players:
-        ready_players[code] = set()
-
     if len(active) < 4:
+        game_launching[code] = False
+        launch_players[code] = []
+        ready_players[code] = set()
         return f"""<h2 style="text-align:center">인원이 부족합니다 (현재 {len(active)}명 / 최소 4명)</h2>
         {back_button_g(f'/game/join/{code}','대기실로 돌아가기')}"""
 
-    if not all(p in ready_players[code] for p in active):
-        return f"""<h2 style="text-align:center">아직 모든 플레이어가 게임 시작을 누르지 않았습니다.</h2>
-        {back_button_g(f'/game/wait/{code}','대기실로 돌아가기')}"""
+    if code not in g_roles or not g_roles.get(code):
+        job_list = ["마피아", "경찰", "의사"]
+        g_roles[code] = {}
+        random.shuffle(active)
 
-    job_list = ["마피아", "경찰", "의사"]
-    g_roles[code] = {}
-    random.shuffle(active)
+        for i, p in enumerate(active):
+            g_roles[code][p] = job_list[i] if i < 3 else "시민"
 
-    for i, p in enumerate(active):
-        g_roles[code][p] = job_list[i] if i < 3 else "시민"
-
-    night_phase[code] = "mafia"
-    ready_players[code] = set()
+        night_phase[code] = "mafia"
+        ready_players[code] = set()
 
     role = g_roles[code].get(get_player_id(), "시민")
 
@@ -1599,6 +1602,7 @@ def game_start(code):
 
 @app.route('/game/night/<code>')
 def game_night(code):
+    game_launching[code] = False
     ip    = get_player_id()
     role  = g_roles.get(code,{}).get(ip,"시민")
     alive = [p for p in invite_ips.get(code,[]) if p not in dead_players.get(code,[])]
@@ -1729,7 +1733,7 @@ def game_discussion(code):
             var box=document.getElementById("chat_box");
             var div=document.createElement("div"); div.style.marginBottom="6px";
             var isMe=data.ip===myIp; div.style.textAlign=isMe?"right":"left"; div.style.color=isMe?"#0066cc":"#333";
-            div.innerHTML="<b>"+(isMe?"나":(data.name || data.ip))+"</b>: "+data.msg;
+            div.innerHTML="<b>"+(isMe?"나":data.ip)+"</b>: "+data.msg;
             box.appendChild(div); box.scrollTop=box.scrollHeight;
         }});
         function sendChat(){{
@@ -1838,7 +1842,6 @@ def game_nickname():
         if current_nickname:
             if current_nickname == nickname:
                 session['game_nickname'] = current_nickname
-                session['use_ip_mode'] = False
                 return redirect('/game/online')
 
             return render_online_shell(
@@ -1871,7 +1874,6 @@ def game_nickname():
 
         save_or_activate_nickname(player_id, nickname)
         session['game_nickname'] = nickname
-        session['use_ip_mode'] = False
 
         # 닉네임 저장 후 광고 게이트로 이동
         return redirect('/game/ad-gate?next=/game/online')
@@ -1918,8 +1920,11 @@ def game_nickname():
         inner_html
     )
 
+import os
+
 if __name__ == "__main__":
     init_db()
 
+    import os
     port = int(os.environ.get("PORT", 5000))
     socketio.run(app, host="0.0.0.0", port=port)
