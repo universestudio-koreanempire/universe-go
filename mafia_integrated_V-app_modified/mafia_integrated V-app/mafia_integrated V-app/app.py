@@ -925,13 +925,9 @@ def back_button_g(href="/game", label="게임 메인으로"):
     return f'<div style="text-align:center;margin-top:30px"><button onclick="location.href=\'{href}\'" style="padding:20px;font-size:20px">{label}</button></div>'
 
 def waiting_room_html(title, code, start_url):
-    print("WAITING_ROOM_HTML USED")
-    print("title =", title)
-
     count = len(get_active_players(code))
     my_id = (session.get('game_nickname') or get_player_id())
     disabled_attr = "disabled" if count < 4 else ""
-    status_txt = "4명 이상이면 게임을 시작할 수 있습니다." if count < 4 else "게임을 시작할 수 있습니다!"
 
     return f"""
     <h1 style="text-align:center; color:#4CAF50; font-size:36px; margin-top:20px;">
@@ -945,49 +941,70 @@ def waiting_room_html(title, code, start_url):
     </p>
 
     <h3 id="count" style="text-align:center">현재 접속 인원: {count}명</h3>
-    <h4 id="status" style="text-align:center;color:gray">{status_txt}</h4>
+    <h4 id="status" style="text-align:center;color:gray">대기 중...</h4>
 
     <div style="text-align:center">
-        <button id="start_btn" onclick="location.href='{start_url}'"
+        <button id="start_btn" onclick="readyStart()"
             style="padding:20px;font-size:20px;cursor:pointer" {disabled_attr}>
             게임 시작
         </button>
     </div>
 
     <script>
-        function sendHeartbeat(){{fetch("/game/heartbeat/{code}",{{method:"POST"}});}}
+        function sendHeartbeat() {{
+            fetch("/game/heartbeat/{code}", {{method:"POST"}});
+        }}
 
-        function updateCount(){{
+        function updateCount() {{
             fetch("/game/player_count/{code}")
-            .then(r=>r.json())
-            .then(data=>{{
-                var c=data.count;
-                document.getElementById("count").innerText="현재 접속 인원: "+c+"명";
+            .then(r => r.json())
+            .then(data => {{
+                var c = data.count;
+                document.getElementById("count").innerText = "현재 접속 인원: " + c + "명";
 
-                var btn=document.getElementById("start_btn");
+                var btn = document.getElementById("start_btn");
 
-                if(c>=4){{
-                    btn.disabled=false;
-                    btn.style.opacity="1";
-                    document.getElementById("status").innerText="게임을 시작할 수 있습니다!";
-                    document.getElementById("status").style.color="green";
+                if (c >= 4) {{
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
                 }} else {{
-                    btn.disabled=true;
-                    btn.style.opacity="0.4";
-                    document.getElementById("status").innerText="4명 이상이면 게임을 시작할 수 있습니다.("+c+"/4)";
-                    document.getElementById("status").style.color="gray";
+                    btn.disabled = true;
+                    btn.style.opacity = "0.4";
+                }}
+            }});
+        }}
+
+        function readyStart() {{
+            var btn = document.getElementById("start_btn");
+            btn.disabled = true;
+            btn.innerText = "준비 완료";
+
+            fetch("/game/ready_start/{code}", {{method:"POST"}});
+        }}
+
+        function checkStartState() {{
+            fetch("/game/start_state/{code}")
+            .then(r => r.json())
+            .then(data => {{
+                if (data.started) {{
+                    location.href = "/game/start/{code}";
+                }} else {{
+                    document.getElementById("status").innerText =
+                        "준비: " + data.ready + "/" + data.total;
                 }}
             }});
         }}
 
         sendHeartbeat();
-        setInterval(sendHeartbeat,1000);
+        setInterval(sendHeartbeat, 1000);
 
         updateCount();
-        setInterval(updateCount,1000);
+        setInterval(updateCount, 1000);
+
+        checkStartState();
+        setInterval(checkStartState, 1000);
     </script>
     """
-
 # ── 오프라인 ──
 def init_offline_game(player_count):
     role_list = ["🔫 마피아","👮 경찰","🧑‍⚕️ 의사"] + ["👨 시민"]*(player_count-3)
@@ -1519,7 +1536,12 @@ def game_wait(code):
 
 @app.route('/game/start/<code>')
 def game_start(code):
-    active = get_active_players(code)
+
+    if not game_launching.get(code, False):
+        return f"""<h2 style="text-align:center">아직 게임 시작 준비 중입니다.</h2>
+        {back_button_g(f'/game/wait/{code}','대기실로 돌아가기')}"""
+
+    active = launch_players.get(code, [])[:]
     invite_ips[code] = active
     if len(active) < 4:
         return f"""<h2 style="text-align:center">인원이 부족합니다 (현재 {len(active)}명 / 최소 4명)</h2>
