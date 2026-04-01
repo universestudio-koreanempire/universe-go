@@ -899,7 +899,7 @@ def ingame_socket_js(code):
     return f"""{SOCKETIO_SCRIPT}
     <script>
         var socket = io();
-        socket.emit("join_room", {code: "{code}"});
+        socket.emit("join_room", {{ "code": "{code}" }});
 
         function sendHeartbeat() {{
             socket.emit("heartbeat", {{code: "{code}"}});
