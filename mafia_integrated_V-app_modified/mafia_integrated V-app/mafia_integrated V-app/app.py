@@ -731,6 +731,9 @@ night_phase      = {}
 night_results    = {}
 result_confirmed = {}
 day_votes        = {}
+ready_players    = {}
+game_launching   = {}
+launch_players   = {}
 HEARTBEAT_TIMEOUT = 3
 
 # ── 오프라인 상태 ──
@@ -876,6 +879,9 @@ def reset_online_game(code):
     night_phase.pop(code, None); night_results.pop(code, None)
     result_confirmed.pop(code, None); day_votes.pop(code, None)
     heartbeats[code]   = {}
+    ready_players[code] = set()
+    game_launching[code] = False
+    launch_players[code] = []
 
 def check_victory(code):
     all_players   = invite_ips.get(code, [])
