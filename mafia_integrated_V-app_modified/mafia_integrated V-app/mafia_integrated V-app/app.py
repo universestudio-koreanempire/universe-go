@@ -872,17 +872,10 @@ def reset_online_game(code):
     invite_ips[code]   = []
     g_roles[code]      = {}
     dead_players[code] = []
-    g_killed.pop(code, None)
-    g_saved.pop(code, None)
-    g_arrested.pop(code, None)
-    night_phase.pop(code, None)
-    night_results.pop(code, None)
-    result_confirmed.pop(code, None)
-    day_votes.pop(code, None)
+    g_killed.pop(code, None); g_saved.pop(code, None); g_arrested.pop(code, None)
+    night_phase.pop(code, None); night_results.pop(code, None)
+    result_confirmed.pop(code, None); day_votes.pop(code, None)
     heartbeats[code]   = {}
-    ready_players[code] = set()
-    game_launching[code] = False
-    launch_players[code] = []
 
 def check_victory(code):
     all_players   = invite_ips.get(code, [])
@@ -932,7 +925,7 @@ def waiting_room_html(title, code, start_url):
     count = len(get_active_players(code))
     my_id = (session.get('game_nickname') or get_player_id())
     disabled_attr = "disabled" if count < 4 else ""
-    status_txt = "4명 이상이면 게임을 시작할 수 있습니다." if count < 4 else "게임 시작 준비를 할 수 있습니다!"
+    status_txt = "4명 이상이면 게임을 시작할 수 있습니다." if count < 4 else "게임을 시작할 수 있습니다!"
 
     return f"""
     <h1 style="text-align:center; color:#4CAF50; font-size:36px; margin-top:20px;">
@@ -949,81 +942,43 @@ def waiting_room_html(title, code, start_url):
     <h4 id="status" style="text-align:center;color:gray">{status_txt}</h4>
 
     <div style="text-align:center">
-        <button id="start_btn" onclick="readyStart()"
+        <button id="start_btn" onclick="location.href='{start_url}'"
             style="padding:20px;font-size:20px;cursor:pointer" {disabled_attr}>
             게임 시작
         </button>
     </div>
 
     <script>
-        function sendHeartbeat() {{
-            fetch("/game/heartbeat/{code}", {{method:"POST"}});
-        }}
+        function sendHeartbeat(){{fetch("/game/heartbeat/{code}",{{method:"POST"}});}}
 
-        function updateCount() {{
+        function updateCount(){{
             fetch("/game/player_count/{code}")
-            .then(r => r.json())
-            .then(data => {{
-                var c = data.count;
-                document.getElementById("count").innerText = "현재 접속 인원: " + c + "명";
+            .then(r=>r.json())
+            .then(data=>{{
+                var c=data.count;
+                document.getElementById("count").innerText="현재 접속 인원: "+c+"명";
 
-                var btn = document.getElementById("start_btn");
+                var btn=document.getElementById("start_btn");
 
-                if (c >= 4) {{
-                    btn.disabled = false;
-                    btn.style.opacity = "1";
-                    document.getElementById("status").innerText = "게임 시작 준비를 할 수 있습니다!";
-                    document.getElementById("status").style.color = "green";
+                if(c>=4){{
+                    btn.disabled=false;
+                    btn.style.opacity="1";
+                    document.getElementById("status").innerText="게임을 시작할 수 있습니다!";
+                    document.getElementById("status").style.color="green";
                 }} else {{
-                    btn.disabled = true;
-                    btn.style.opacity = "0.4";
-                    document.getElementById("status").innerText = "4명 이상이면 게임을 시작할 수 있습니다. (" + c + "/4)";
-                    document.getElementById("status").style.color = "gray";
-                }}
-            }});
-        }}
-
-        function readyStart() {{
-            var btn = document.getElementById("start_btn");
-            btn.disabled = true;
-            btn.style.opacity = "0.6";
-            btn.innerText = "준비 완료";
-
-            fetch("/game/ready_start/{code}", {{method:"POST"}})
-            .then(r => r.json())
-            .then(data => {{
-                if (data.started) {{
-                    location.href = "/game/start/{code}";
-                }} else {{
-                    document.getElementById("status").innerText =
-                        "시작 준비 중... (" + data.ready + "/" + data.total + ")";
-                    document.getElementById("status").style.color = "orange";
-                }}
-            }});
-        }}
-
-        function checkStartState() {{
-            fetch("/game/start_state/{code}")
-            .then(r => r.json())
-            .then(data => {{
-                if (data.started) {{
-                    location.href = "/game/start/{code}";
-                }} else if (data.total >= 4) {{
-                    document.getElementById("status").innerText =
-                        "게임 시작 준비: " + data.ready + "/" + data.total;
-                    document.getElementById("status").style.color = "orange";
+                    btn.disabled=true;
+                    btn.style.opacity="0.4";
+                    document.getElementById("status").innerText="4명 이상이면 게임을 시작할 수 있습니다.("+c+"/4)";
+                    document.getElementById("status").style.color="gray";
                 }}
             }});
         }}
 
         sendHeartbeat();
-        setInterval(sendHeartbeat, 1000);
+        setInterval(sendHeartbeat,1000);
 
         updateCount();
-        setInterval(updateCount, 1000);
-
-        checkStartState();
-        setInterval(checkStartState, 1000);
+        setInterval(updateCount,1000);
     </script>
     """
 
@@ -1153,21 +1108,16 @@ def on_chat(data):
 
 @socketio.on("heartbeat")
 def on_heartbeat(data):
-    code = data.get("code")
-    player_id = get_player_id()
-    if not code:
-        return
-    if code not in heartbeats:
-        heartbeats[code] = {}
-    heartbeats[code][player_id] = time.time()
+    code = data.get("code"); ip = session.get("user") or request.remote_addr
+    if not code: return
+    if code not in heartbeats: heartbeats[code] = {}
+    heartbeats[code][ip] = time.time()
     if code in invite_ips and invite_ips[code]:
-        if night_phase.get(code) == "done" or game_launching.get(code, False):
-            return
+        if night_phase.get(code) == "done": return
         now = time.time()
-        all_online = [p for p in invite_ips[code] if (now - heartbeats.get(code, {}).get(p, 0)) < HEARTBEAT_TIMEOUT]
+        all_online = [p for p in invite_ips[code] if (now-heartbeats.get(code,{}).get(p,0)) < HEARTBEAT_TIMEOUT]
         if len(all_online) < 4:
-            reset_online_game(code)
-            socketio.emit("game_abort", {}, room=code)
+            reset_online_game(code); socketio.emit("game_abort",{},room=code)
 
 @socketio.on("confirm_result")
 def on_confirm_result(data):
@@ -1563,33 +1513,17 @@ def game_wait(code):
 
 @app.route('/game/start/<code>')
 def game_start(code):
-    if not game_launching.get(code, False):
-        return f"""<h2 style="text-align:center">아직 게임 시작이 확정되지 않았습니다.</h2>
-        {back_button_g(f'/game/wait/{code}','대기실로 돌아가기')}"""
-
-    active = launch_players.get(code, [])[:]
+    active = get_active_players(code)
     invite_ips[code] = active
-
     if len(active) < 4:
-        game_launching[code] = False
-        launch_players[code] = []
-        ready_players[code] = set()
         return f"""<h2 style="text-align:center">인원이 부족합니다 (현재 {len(active)}명 / 최소 4명)</h2>
         {back_button_g(f'/game/join/{code}','대기실로 돌아가기')}"""
-
-    if code not in g_roles or not g_roles.get(code):
-        job_list = ["마피아", "경찰", "의사"]
-        g_roles[code] = {}
-        random.shuffle(active)
-
-        for i, p in enumerate(active):
-            g_roles[code][p] = job_list[i] if i < 3 else "시민"
-
-        night_phase[code] = "mafia"
-        ready_players[code] = set()
-
+    job_list = ["마피아","경찰","의사"]
+    g_roles[code] = {}; random.shuffle(active)
+    for i, p in enumerate(active):
+        g_roles[code][p] = job_list[i] if i < 3 else "시민"
+    night_phase[code] = "mafia"
     role = g_roles[code].get(get_player_id(), "시민")
-
     return f"""<h1 id="role" style="text-align:center">직업</h1>
     <script>
         document.getElementById("role").innerText="{role}";
@@ -1733,7 +1667,7 @@ def game_discussion(code):
             var box=document.getElementById("chat_box");
             var div=document.createElement("div"); div.style.marginBottom="6px";
             var isMe=data.ip===myIp; div.style.textAlign=isMe?"right":"left"; div.style.color=isMe?"#0066cc":"#333";
-            div.innerHTML="<b>"+(isMe?"나":data.ip)+"</b>: "+data.msg;
+            div.innerHTML="<b>"+(isMe?"나":(data.name || data.ip))+"</b>: "+data.msg;
             box.appendChild(div); box.scrollTop=box.scrollHeight;
         }});
         function sendChat(){{
@@ -1842,6 +1776,7 @@ def game_nickname():
         if current_nickname:
             if current_nickname == nickname:
                 session['game_nickname'] = current_nickname
+                session['use_ip_mode'] = False
                 return redirect('/game/online')
 
             return render_online_shell(
@@ -1874,6 +1809,7 @@ def game_nickname():
 
         save_or_activate_nickname(player_id, nickname)
         session['game_nickname'] = nickname
+        session['use_ip_mode'] = False
 
         # 닉네임 저장 후 광고 게이트로 이동
         return redirect('/game/ad-gate?next=/game/online')
