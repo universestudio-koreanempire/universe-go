@@ -687,29 +687,19 @@ def developer_mode():
 
     return render_template('developer.html')
 
-@app.route('/admin/members/delete/<int:user_id>', methods=['POST'])
-
-def admin_delete_member(user_id):
+@app.route('/admin/complaints')
+def admin_complaints():
     if session.get('user') not in ADMIN_USERS:
         flash('관리자만 접근할 수 있습니다.', 'error')
         return redirect(url_for('index'))
+
     db = get_db()
-    user = db.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
-    if not user:
-        flash('존재하지 않는 계정입니다.', 'error')
-        db.close()
-        return redirect(url_for('admin_members'))
-    if user['username'] == 'admin':
-        flash('admin 계정은 삭제할 수 없습니다.', 'error')
-        db.close()
-        return redirect(url_for('admin_members'))
-    db.execute('DELETE FROM users WHERE id = ?', (user_id,))
-    db.execute('DELETE FROM rewards WHERE username = ?', (user['username'],))
-    db.execute('DELETE FROM purchases WHERE username = ?', (user['username'],))
-    db.commit()
+    complaints = db.execute(
+        'SELECT * FROM complaints ORDER BY id DESC'
+    ).fetchall()
     db.close()
-    flash(f'[{user["username"]}] 계정이 삭제되었습니다.', 'success')
-    return redirect(url_for('admin_members'))
+
+    return render_template('admin_complaints.html', complaints=complaints)
 
 @app.route('/logout')
 def logout():
