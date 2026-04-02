@@ -996,7 +996,7 @@ def waiting_room_html(title, code, start_url):
         }}
 
         sendHeartbeat();
-        setInterval(sendHeartbeat, 1000);
+        setInterval(sendHeartbeat, 900);
 
         updateCount();
         setInterval(updateCount, 1000);
@@ -1131,16 +1131,33 @@ def on_chat(data):
 
 @socketio.on("heartbeat")
 def on_heartbeat(data):
-    code = data.get("code"); ip = session.get("user") or request.remote_addr
-    if not code: return
-    if code not in heartbeats: heartbeats[code] = {}
+    code = data.get("code")
+    ip = session.get("user") or request.remote_addr
+
+    if not code:
+        return
+
+    if code not in heartbeats:
+        heartbeats[code] = {}
+
     heartbeats[code][ip] = time.time()
+
+    if game_launching.get(code, False):
+        return
+
     if code in invite_ips and invite_ips[code]:
-        if night_phase.get(code) == "done": return
+        if night_phase.get(code) == "done":
+            return
+
         now = time.time()
-        all_online = [p for p in invite_ips[code] if (now-heartbeats.get(code,{}).get(p,0)) < HEARTBEAT_TIMEOUT]
+        all_online = [
+            p for p in invite_ips[code]
+            if (now - heartbeats.get(code, {}).get(p, 0)) < HEARTBEAT_TIMEOUT
+        ]
+
         if len(all_online) < 4:
-            reset_online_game(code); socketio.emit("game_abort",{},room=code)
+            reset_online_game(code)
+            socketio.emit("game_abort", {}, room=code)
 
 @socketio.on("confirm_result")
 def on_confirm_result(data):
