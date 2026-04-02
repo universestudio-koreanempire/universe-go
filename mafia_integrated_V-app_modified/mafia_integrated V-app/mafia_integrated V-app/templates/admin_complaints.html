@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>접수된 민원 내역</h1>
+    <p>관리자 전용 페이지입니다.</p>
+</div>
+
+<div class="content-page">
+    <div style="margin-bottom:20px;">
+        <a href="{{ url_for('admin_users') }}" class="back-btn">← 관리자 페이지로</a>
+    </div>
+
+    {% if complaints %}
+        {% for c in complaints %}
+        <div class="notice-detail" style="margin-bottom:20px;">
+            <h2>{{ c.title }}</h2>
+            <div class="notice-meta">
+                작성자: {{ c.username }} |
+                분류: {{ c.category }} |
+                상태: {{ c.status }} |
+                접수일: {{ c.created }}
+            </div>
+            <div class="notice-body">
+                {{ c.content }}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="privacy-box">
+            아직 접수된 민원이 없습니다.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
