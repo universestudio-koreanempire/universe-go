@@ -665,14 +665,23 @@ def sitemap():
     ]
     return render_template('sitemap.html', pages=pages)
 
+import os
+
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+
 @app.route('/developer', methods=['GET', 'POST'])
 def developer_mode():
     if request.method == 'POST':
         password = request.form.get('password')
 
-        if password == "1universe.koreanempire.korea.KR":
+        # 환경변수 없을 때 대비
+        if not ADMIN_PASSWORD:
+            flash('관리자 비밀번호가 설정되지 않았습니다.', 'error')
+            return render_template('developer.html')
+
+        if password == ADMIN_PASSWORD:
             session['user'] = 'admin'
-            return redirect(url_for('admin_users'))  # ← 여기 중요
+            return redirect(url_for('admin_users'))
         else:
             flash('비밀번호가 올바르지 않습니다.', 'error')
 
