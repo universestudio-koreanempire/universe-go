@@ -670,7 +670,7 @@ def developer_mode():
     if request.method == 'POST':
         password = request.form.get('password')
 
-        if password == "DevMafia!2026#X7Q9":
+        if password == "1universe.koreanempire.korea.KR":
             session['user'] = 'admin'
             return redirect(url_for('admin_users'))  # ← 여기 중요
         else:
