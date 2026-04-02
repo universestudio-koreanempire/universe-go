@@ -996,7 +996,7 @@ def waiting_room_html(title, code, start_url):
         }}
 
         sendHeartbeat();
-        setInterval(sendHeartbeat, 900);
+        setInterval(sendHeartbeat, 1000);
 
         updateCount();
         setInterval(updateCount, 1000);
