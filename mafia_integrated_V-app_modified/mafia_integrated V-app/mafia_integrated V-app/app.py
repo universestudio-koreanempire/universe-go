@@ -681,7 +681,7 @@ def developer_mode():
 
         if password == ADMIN_PASSWORD:
             session['user'] = 'admin'
-            return redirect(url_for('admin_complaint'))
+            return redirect(url_for('admin_complaints'))
         else:
             flash('비밀번호가 올바르지 않습니다.', 'error')
 
