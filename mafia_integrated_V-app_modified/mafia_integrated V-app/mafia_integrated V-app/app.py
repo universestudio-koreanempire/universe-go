@@ -1123,10 +1123,23 @@ def on_join(data):
 
 @socketio.on("chat_message")
 def on_chat(data):
-    code = data.get("code"); ip = session.get("user") or request.remote_addr
-    msg  = data.get("msg","").strip()[:200]
-    if not code or not msg: return
-    socketio.emit("chat_message",{"ip":ip,"msg":msg},room=code)
+    code = data.get("code")
+    player_id = get_player_id()
+    sender = (session.get("game_nickname") or player_id)
+    msg = data.get("msg", "").strip()[:200]
+
+    if not code or not msg:
+        return
+
+    socketio.emit(
+        "chat_message",
+        {
+            "ip": player_id,
+            "name": sender,
+            "msg": msg
+        },
+        room=code
+    )
 
 @socketio.on("heartbeat")
 def on_heartbeat(data):
