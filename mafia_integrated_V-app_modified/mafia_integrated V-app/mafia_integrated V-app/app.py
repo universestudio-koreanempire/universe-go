@@ -671,10 +671,13 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 
 @app.route('/developer', methods=['GET', 'POST'])
 def developer_mode():
+
+    if request.method == 'GET':
+        session.pop('user', None)
+
     if request.method == 'POST':
         password = request.form.get('password')
 
-        # 환경변수 없을 때 대비
         if not ADMIN_PASSWORD:
             flash('관리자 비밀번호가 설정되지 않았습니다.', 'error')
             return render_template('developer.html')
