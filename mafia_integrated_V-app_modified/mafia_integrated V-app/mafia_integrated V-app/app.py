@@ -1253,6 +1253,160 @@ def game_withai():
         '''
     )
 
+@app.route('/game/withai/start')
+def game_withai_start():
+    game = get_ai_game()
+    player_name = get_ai_player_name()
+
+    if not game or not player_name:
+        return redirect('/game/ai/nickname')
+
+    game["started"] = True
+    game["night_actions"] = {
+        "mafia": None,
+        "doctor": None,
+        "police": None,
+    }
+
+    player_role = game["roles"][player_name]
+
+    if player_role == "시민":
+        fill_ai_night_actions(game, player_name)
+        resolve_ai_night(game)
+        return redirect('/game/withai/night_result')
+
+    return redirect('/game/withai/night')
+
+
+@app.route('/game/withai/night')
+def game_withai_night():
+    game = get_ai_game()
+    player_name = get_ai_player_name()
+
+    if not game or not player_name:
+        return redirect('/game/ai/nickname')
+
+    role = game["roles"][player_name]
+    alive_names = [n for n, ok in game["alive"].items() if ok]
+
+    if role == "시민":
+        return redirect('/game/withai/night_result')
+
+    title_map = {
+        "마피아": "죽일 사람을 선택하세요",
+        "의사": "살릴 사람을 선택하세요",
+        "경찰": "조사할 사람을 선택하세요",
+    }
+
+    buttons = ""
+    for name in alive_names:
+        if role in ["마피아", "경찰"] and name == player_name:
+            continue
+        buttons += f"""
+        <div style="text-align:center; margin-top:10px;">
+            <button class="action-btn btn-purple" onclick="location.href='/game/withai/night/action/{name}'">
+                {name}
+            </button>
+        </div>
+        """
+
+    return render_online_shell(
+        f"{player_name}님",
+        title_map.get(role, "밤 행동"),
+        buttons
+    )
+
+
+@app.route('/game/withai/night/action/<target>')
+def game_withai_night_action(target):
+    game = get_ai_game()
+    player_name = get_ai_player_name()
+
+    if not game or not player_name:
+        return redirect('/game/ai/nickname')
+
+    role = game["roles"][player_name]
+
+    if role == "마피아":
+        game["night_actions"]["mafia"] = target
+    elif role == "의사":
+        game["night_actions"]["doctor"] = target
+    elif role == "경찰":
+        game["night_actions"]["police"] = target
+
+    fill_ai_night_actions(game, player_name)
+    resolve_ai_night(game)
+
+    return redirect('/game/withai/night_result')
+
+
+@app.route('/game/withai/night_result')
+def game_withai_night_result():
+    game = get_ai_game()
+    player_name = get_ai_player_name()
+
+    if not game or not player_name:
+        return redirect('/game/ai/nickname')
+
+    extra = ""
+    if game["roles"][player_name] == "경찰":
+        extra = f"<div class='note' style='margin-top:10px;'><b>조사 결과:</b> {game['police_result']}</div>"
+
+    return render_online_shell(
+        f"{player_name}님",
+        "밤 결과",
+        f'''
+        <div class="note" style="font-size:18px;">
+            {game["night_result"]}
+        </div>
+        {extra}
+        <div style="text-align:center; margin-top:24px;">
+            <button class="action-btn btn-blue" onclick="location.href='/game/withai/discussion'">
+                토론 시작
+            </button>
+        </div>
+        '''
+    )
+
+
+@app.route('/game/withai/discussion')
+def game_withai_discussion():
+    game = get_ai_game()
+    player_name = get_ai_player_name()
+
+    if not game or not player_name:
+        return redirect('/game/ai/nickname')
+
+    alive_names = [n for n, ok in game["alive"].items() if ok]
+
+    # 1차 버전: 간단한 봇 발언
+    lines = []
+    for name in alive_names:
+        if name == player_name:
+            continue
+        lines.append(f"{name}: 저는 아직 잘 모르겠어요.")
+    talk_html = "<br>".join(lines)
+
+    return render_online_shell(
+        f"{player_name}님",
+        "낮 토론",
+        f'''
+        <div class="note" style="font-size:18px;">
+            {game["night_result"]}
+        </div>
+
+        <div class="note" style="margin-top:18px; text-align:left;">
+            {talk_html}
+        </div>
+
+        <div style="text-align:center; margin-top:24px;">
+            <button class="action-btn btn-green" onclick="location.href='/game/withai/vote'">
+                투표하러 가기
+            </button>
+        </div>
+        '''
+    )
+
 @app.route('/api/offline/start', methods=['POST'])
 def offline_start():
     data  = request.get_json()
