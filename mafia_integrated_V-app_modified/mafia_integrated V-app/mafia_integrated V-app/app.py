@@ -190,7 +190,7 @@ AD_PANORAMA = """
     background: #1e7e8a; display: flex; align-items: center; justify-content: center;
     border-radius: 0px; color: white; font-size: 1.1rem; font-weight: 700;
     letter-spacing: 1px; box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-">광고 공간 (980 × 120 · 파노라마)</div>
+">광고를 준비하는 중입니다.</div>
 """
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'mafia_go.db')
