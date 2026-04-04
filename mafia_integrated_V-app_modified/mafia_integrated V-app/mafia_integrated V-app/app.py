@@ -740,6 +740,7 @@ HEARTBEAT_TIMEOUT = 3
 
 # ── 오프라인 상태 ──
 offline_games = {}
+ai_games = {}
 
 def get_player_id():
     if 'player_id' not in session:
