@@ -1052,6 +1052,93 @@ def init_ai_game(player_name):
 
     return game
 
+def get_ai_game():
+    gid = session.get("ai_game_id")
+    if not gid:
+        return None
+    return ai_games.get(gid)
+
+
+def get_ai_player_name():
+    return (session.get("ai_nickname") or "").strip()
+
+
+def fill_ai_night_actions(game, player_name):
+    alive = [n for n, ok in game["alive"].items() if ok]
+    roles = game["roles"]
+    actions = game["night_actions"]
+
+    mafia_name = next(name for name, role in roles.items() if role == "마피아")
+    doctor_name = next(name for name, role in roles.items() if role == "의사")
+    police_name = next(name for name, role in roles.items() if role == "경찰")
+
+    if actions["mafia"] is None and mafia_name != player_name:
+        candidates = [n for n in alive if n != mafia_name]
+        actions["mafia"] = random.choice(candidates)
+
+    if actions["doctor"] is None and doctor_name != player_name:
+        actions["doctor"] = random.choice(alive)
+
+    if actions["police"] is None and police_name != player_name:
+        candidates = [n for n in alive if n != police_name]
+        actions["police"] = random.choice(candidates)
+
+
+def resolve_ai_night(game):
+    kill_target = game["night_actions"]["mafia"]
+    heal_target = game["night_actions"]["doctor"]
+    police_target = game["night_actions"]["police"]
+
+    if kill_target == heal_target:
+        game["night_result"] = f"{kill_target}은(는) 공격당했지만 살아남았습니다."
+    else:
+        game["alive"][kill_target] = False
+        if kill_target not in game["dead"]:
+            game["dead"].append(kill_target)
+        game["night_result"] = f"{kill_target}이(가) 공격당했습니다."
+
+    if game["roles"][police_target] == "마피아":
+        game["police_result"] = f"{police_target}은(는) 마피아입니다."
+    else:
+        game["police_result"] = f"{police_target}은(는) 마피아가 아닙니다."
+
+
+def run_ai_votes(game, player_name, player_target):
+    alive = [n for n, ok in game["alive"].items() if ok]
+    votes = {player_name: player_target}
+
+    for voter in alive:
+        if voter == player_name:
+            continue
+        candidates = [n for n in alive if n != voter]
+        votes[voter] = random.choice(candidates)
+
+    game["votes"] = votes
+
+    tally = Counter(votes.values())
+    max_votes = max(tally.values())
+    top = [name for name, v in tally.items() if v == max_votes]
+    exiled = top[0] if len(top) == 1 else None
+
+    if exiled:
+        game["alive"][exiled] = False
+        if exiled not in game["dead"]:
+            game["dead"].append(exiled)
+
+    return exiled, tally
+
+
+def check_ai_victory(game):
+    alive_names = [n for n, ok in game["alive"].items() if ok]
+    mafia_alive = [n for n in alive_names if game["roles"][n] == "마피아"]
+    citizen_alive = [n for n in alive_names if game["roles"][n] != "마피아"]
+
+    if len(mafia_alive) == 0:
+        return "citizen"
+    if len(mafia_alive) >= len(citizen_alive):
+        return "mafia"
+    return None
+
 @app.route('/game')
 def game_home():
     return render_template('game_home.html', top_bar=game_top_bar())
