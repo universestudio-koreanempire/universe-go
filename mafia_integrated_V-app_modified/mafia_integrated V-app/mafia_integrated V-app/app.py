@@ -1023,6 +1023,10 @@ def game_home():
 def game_offline():
     return render_template('game_offline.html')
 
+@app.route('/game/ai')
+def game_ai():
+    return render_template('game_ai.html')
+
 @app.route('/api/offline/start', methods=['POST'])
 def offline_start():
     data  = request.get_json()
