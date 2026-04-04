@@ -1217,12 +1217,41 @@ def game_ai_nickname():
 
 @app.route('/game/withai')
 def game_withai():
-    ai_name = (session.get('ai_nickname') or '').strip()
+    ai_name = get_ai_player_name()
 
     if not ai_name:
         return redirect('/game/ai/nickname')
 
-    return render_template('game_withai.html', ai_nickname=ai_name)
+    game = get_ai_game()
+
+    if not game:
+        gid = str(uuid.uuid4())
+        game = init_ai_game(ai_name)
+        ai_games[gid] = game
+        session["ai_game_id"] = gid
+        session["ai_role"] = game["roles"][ai_name]
+
+    my_role = game["roles"][ai_name]
+
+    return render_online_shell(
+        f"{ai_name}님",
+        "AI 마피아 모드입니다.",
+        f'''
+        <div class="note" style="font-size:18px;">
+            내 직업: <b>{my_role}</b>
+        </div>
+
+        <div class="note" style="margin-top:14px;">
+            참가자: <b>{", ".join(game["names"])}</b>
+        </div>
+
+        <div style="text-align:center; margin-top:24px;">
+            <button class="action-btn btn-purple" onclick="location.href='/game/withai/start'">
+                시작
+            </button>
+        </div>
+        '''
+    )
 
 @app.route('/api/offline/start', methods=['POST'])
 def offline_start():
