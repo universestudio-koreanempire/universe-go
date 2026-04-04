@@ -1407,6 +1407,83 @@ def game_withai_discussion():
         '''
     )
 
+@app.route('/game/withai/vote')
+def game_withai_vote():
+    game = get_ai_game()
+    player_name = get_ai_player_name()
+
+    if not game or not player_name:
+        return redirect('/game/ai/nickname')
+
+    alive_names = [n for n, ok in game["alive"].items() if ok]
+
+    buttons = ""
+    for name in alive_names:
+        if name == player_name:
+            continue
+        buttons += f"""
+        <div style="text-align:center; margin-top:10px;">
+            <button class="action-btn btn-red" onclick="location.href='/game/withai/vote/cast/{name}'">
+                {name}에게 투표
+            </button>
+        </div>
+        """
+
+    return render_online_shell(
+        f"{player_name}님",
+        "추방할 플레이어를 선택하세요",
+        buttons
+    )
+
+
+@app.route('/game/withai/vote/cast/<target>')
+def game_withai_vote_cast(target):
+    game = get_ai_game()
+    player_name = get_ai_player_name()
+
+    if not game or not player_name:
+        return redirect('/game/ai/nickname')
+
+    exiled, tally = run_ai_votes(game, player_name, target)
+    winner = check_ai_victory(game)
+
+    if winner == "citizen":
+        return render_online_shell(
+            f"{player_name}님",
+            "게임 종료",
+            "<div class='note' style='font-size:20px;'><b>시민 팀 승리!</b></div>"
+        )
+
+    if winner == "mafia":
+        return render_online_shell(
+            f"{player_name}님",
+            "게임 종료",
+            "<div class='note' style='font-size:20px;'><b>마피아 승리!</b></div>"
+        )
+
+    result_text = f"{exiled}이(가) 추방되었습니다." if exiled else "동률로 아무도 추방되지 않았습니다."
+
+    game["night_actions"] = {
+        "mafia": None,
+        "doctor": None,
+        "police": None,
+    }
+
+    return render_online_shell(
+        f"{player_name}님",
+        "투표 결과",
+        f'''
+        <div class="note" style="font-size:18px;">
+            {result_text}
+        </div>
+        <div style="text-align:center; margin-top:24px;">
+            <button class="action-btn btn-purple" onclick="location.href='/game/withai/start'">
+                다음 밤으로
+            </button>
+        </div>
+        '''
+    )
+
 @app.route('/api/offline/start', methods=['POST'])
 def offline_start():
     data  = request.get_json()
