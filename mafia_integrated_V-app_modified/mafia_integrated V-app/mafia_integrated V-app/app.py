@@ -1025,7 +1025,80 @@ def game_offline():
 
 @app.route('/game/ai')
 def game_ai():
-    return render_template('game_ai.html')
+    return redirect('/game/ai/nickname')
+
+
+@app.route('/game/ai/nickname', methods=['GET', 'POST'])
+def game_ai_nickname():
+    if request.method == 'POST':
+        nickname = request.form.get('nickname', '').strip()
+
+        if not nickname:
+            return render_online_shell(
+                "AI 닉네임 설정",
+                "AI와 플레이할 닉네임을 정해주세요.",
+                '''
+                <div class="note">닉네임을 입력해주세요.</div>
+                <div class="form-box" style="margin-top:18px;">
+                    <form method="POST" style="display:grid; gap:14px;">
+                        <input class="input" name="nickname" placeholder="닉네임 입력" maxlength="20">
+                        <button class="action-btn btn-purple" type="submit">닉네임 저장</button>
+                    </form>
+                </div>
+                '''
+            )
+
+        if len(nickname) > 20:
+            nickname = nickname[:20]
+
+        # 온라인 닉네임과 완전 분리
+        session['ai_nickname'] = nickname
+
+        # 저장 후 광고 게이트 → AI 게임 페이지
+        return redirect('/game/ad-gate?next=/game/withai')
+
+    current_name = (session.get('ai_nickname') or '').strip()
+
+    status = (
+        f'<div style="text-align:center; margin-top:14px; color:#dbeafe; font-size:18px;">'
+        f'현재 AI 닉네임: <b style="color:#fff">{current_name}</b>'
+        f'</div>'
+        if current_name
+        else '<div style="text-align:center; margin-top:14px; color:#dbeafe; font-size:18px;">현재 AI 닉네임 없음</div>'
+    )
+
+    inner_html = f'''
+        <div class="status-box">
+            {status}
+        </div>
+
+        <div class="section-title">AI Nickname</div>
+        <div class="form-box">
+            <form method="POST" style="display:grid; gap:14px;">
+                <input class="input" name="nickname" placeholder="AI 모드 닉네임 입력" maxlength="20">
+                <button class="action-btn btn-purple" type="submit">닉네임 저장</button>
+            </form>
+        </div>
+
+        <div class="note">
+            AI가 어떻게 불러드리면 좋을까요?<br>
+        </div>
+    '''
+
+    return render_online_shell(
+        "AI 닉네임 설정",
+        "AI와 플레이할 닉네임을 정해주세요.",
+        inner_html
+    )
+
+@app.route('/game/withai')
+def game_withai():
+    ai_name = (session.get('ai_nickname') or '').strip()
+
+    if not ai_name:
+        return redirect('/game/ai/nickname')
+
+    return render_template('game_withai.html', ai_nickname=ai_name)
 
 @app.route('/api/offline/start', methods=['POST'])
 def offline_start():
