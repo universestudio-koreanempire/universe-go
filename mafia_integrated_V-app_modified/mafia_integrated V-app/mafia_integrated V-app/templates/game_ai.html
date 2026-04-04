@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>AI와 플레이</h1>
+    <p>혼자서 AI와 함께 플레이하는 모드입니다.</p>
+</div>
+
+<div class="content-page">
+    <div class="notice-detail" style="text-align:center;">
+        <h2 style="margin-bottom:16px;">🤖 서비스 준비중</h2>
+        <p style="margin-bottom:24px;">
+            AI와 함께하는 마피아 게임 모드는 현재 준비 중입니다.<br>
+            조금만 기다려 주세요.
+        </p>
+
+        <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+            <a href="{{ url_for('game_offline') }}" class="back-btn">오프라인 플레이로 이동</a>
+            <a href="{{ url_for('game_home') }}" class="back-btn">게임 메뉴로 돌아가기</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
