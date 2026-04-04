@@ -1016,6 +1016,42 @@ def init_offline_game(player_count):
             "night_step":"mafia","mafia_target":None,"doctor_target":None,"police_target":None,
             "votes":[0]*player_count,"night_deaths":[],"night_saves":[],"role_index":0}
 
+def init_ai_game(player_name):
+    roles = ["마피아", "의사", "경찰", "시민"]
+    random.shuffle(roles)
+
+    bot_names = ["봇1", "봇2", "봇3"]
+    names = [player_name] + bot_names
+
+    game = {
+        "names": names,
+        "roles": {
+            player_name: roles[0],
+            "봇1": roles[1],
+            "봇2": roles[2],
+            "봇3": roles[3],
+        },
+        "alive": {
+            player_name: True,
+            "봇1": True,
+            "봇2": True,
+            "봇3": True,
+        },
+        "dead": [],
+        "started": False,
+        "night_actions": {
+            "mafia": None,
+            "doctor": None,
+            "police": None,
+        },
+        "night_result": "",
+        "police_result": "",
+        "votes": {},
+        "discussion_log": []
+    }
+
+    return game
+
 @app.route('/game')
 def game_home():
     return render_template('game_home.html', top_bar=game_top_bar())
