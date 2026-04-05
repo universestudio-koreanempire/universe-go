@@ -32,6 +32,14 @@ h1{font-size:48px;margin-bottom:10px;letter-spacing:2px;}
     <img id="splashImg" src="{{ url_for('static', filename='images/splash.jpg') }}" alt="U.B Studio">
 </div>
 
+<script>
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      document.getElementById('splash').classList.add('hide');
+    }, 3000);
+  });
+</script>
+
 {{ top_bar|safe }}
 <h1>🕵‍♂️ Mafia go 🕵‍♀️</h1>
 <p class="subtitle">게임 모드를 선택하세요</p>
