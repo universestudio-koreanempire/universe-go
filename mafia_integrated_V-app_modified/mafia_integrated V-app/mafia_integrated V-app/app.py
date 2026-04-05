@@ -644,7 +644,6 @@ def sitemap():
             {'name': '회사 소개', 'url': '/company'},
             {'name': '경영진 인사말', 'url': '/company/greeting'},
             {'name': '운영 원칙', 'url': '/company/principles'},
-            {'name': '회사 정보', 'url': '/company/info'},
         ]},
         {'category': '공지사항', 'links': [
             {'name': '공지사항 목록', 'url': '/notices'},
