@@ -4,18 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}Mafia GO! - 유니버스{% endblock %}</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 <body>
 
     <!-- 앱 상단 헤더 -->
-<header class="app-header">
-    <a href="{{ url_for('index') }}" class="app-logo" style="margin: 0 auto; text-align: center;">
-        {{ site_name }}
-    </a>
-</header>
+    <header class="app-header">
+        <a href="{{ url_for('index') }}" class="app-logo" style="margin: 0 auto; text-align: center;">
+            {{ site_name }}
+        </a>
+    </header>
 
     <!-- 플래시 메시지 -->
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -34,49 +36,53 @@
     </main>
 
     <!-- 하단 탭바 -->
-<nav class="bottom-tab-bar">
-    <a href="{{ url_for('notices_list') }}"
-       class="tab-item {% if request.endpoint == 'notices_list' or request.endpoint == 'notice_detail' %}active{% endif %}">
-        <span class="tab-icon">📢</span>
-        <span class="tab-label">공지</span>
-    </a>
+    <nav class="bottom-tab-bar">
+        <a href="{{ url_for('notices_list') }}"
+           class="tab-item {% if request.endpoint == 'notices_list' or request.endpoint == 'notice_detail' %}active{% endif %}">
+            <span class="tab-icon">📢</span>
+            <span class="tab-label">공지</span>
+        </a>
 
-    <a href="{{ url_for('index') }}"
-       class="tab-item tab-center-btn {% if request.endpoint == 'index' %}active{% endif %}">
-        <span class="tab-icon">🏠</span>
-        <span class="tab-label">홈</span>
-    </a>
+        <a href="{{ url_for('index') }}"
+           class="tab-item tab-center-btn {% if request.endpoint == 'index' %}active{% endif %}">
+            <span class="tab-icon">🏠</span>
+            <span class="tab-label">홈</span>
+        </a>
 
-    <a href="{{ url_for('sitemap') }}"
-       class="tab-item {% if request.endpoint == 'sitemap' %}active{% endif %}">
-        <span class="tab-icon">☰</span>
-        <span class="tab-label">전체보기</span>
-    </a>
-</nav>
-    
+        <a href="{{ url_for('sitemap') }}"
+           class="tab-item {% if request.endpoint == 'sitemap' %}active{% endif %}">
+            <span class="tab-icon">☰</span>
+            <span class="tab-label">전체보기</span>
+        </a>
+    </nav>
+
+    <!-- 🔥 이용약관 동의 배너 -->
+    <div id="consent-banner">
+        <div class="consent-text">
+            사이트를 사용하기 전에 이용약관에 동의해주세요.
+            <a href="{{ url_for('privacy') }}" class="consent-link">개인정보 처리 방침</a>
+        </div>
+        <button id="consent-btn">동의합니다</button>
+    </div>
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
-<div id="consent-banner">
-  <div class="consent-text">
-    사이트를 사용하기 전에 이용약관에 동의해주세요.
-    <a href="/privacy" class="consent-link">개인정보 처리 방침</a>
-  </div>
-  <button id="consent-btn">동의합니다</button>
-</div>
+    <!-- 🔥 배너 동작 JS -->
+    <script>
+        const banner = document.getElementById('consent-banner');
+        const btn = document.getElementById('consent-btn');
 
-<script>
-  const banner = document.getElementById('consent-banner');
-  const btn = document.getElementById('consent-btn');
+        // 이미 동의했으면 숨김
+        if (localStorage.getItem('consentAccepted') === 'true') {
+            banner.style.display = 'none';
+        }
 
-  if (localStorage.getItem('consentAccepted') === 'true') {
-    banner.style.display = 'none';
-  }
-
-  btn.addEventListener('click', function () {
-    localStorage.setItem('consentAccepted', 'true');
-    banner.style.display = 'none';
-  });
-</script>
+        // 버튼 클릭 시
+        btn.addEventListener('click', function () {
+            localStorage.setItem('consentAccepted', 'true');
+            banner.style.display = 'none';
+        });
+    </script>
 
 </body>
 </html>
