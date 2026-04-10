@@ -1167,21 +1167,30 @@ a { text-decoration: none; color: inherit; }
     font-size: 0.8rem !important;
 }
 
-/* 이용약관 배너 */
-#consent-banner {
+/* 약관 동의 전체 차단 오버레이 */
+#consent-overlay {
   position: fixed;
-  left: 0;
-  bottom: 90px; /* 🔥 이게 핵심 (탭바 위로 올림) */
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 20000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+/* 하단 팝업 배너 */
+#consent-banner {
   width: 100%;
-  background: rgba(20,20,20,0.95);
+  max-width: 100%;
+  background: rgba(20, 20, 20, 0.98);
   color: white;
-  padding: 16px 20px;
+  padding: 18px 20px calc(18px + env(safe-area-inset-bottom));
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  z-index: 10000;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.35);
+  box-shadow: 0 -2px 14px rgba(0,0,0,0.4);
 }
 
 .consent-text {
@@ -1206,6 +1215,16 @@ a { text-decoration: none; color: inherit; }
   flex-shrink: 0;
 }
 
+@media (max-width: 640px) {
+  #consent-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #consent-btn {
+    width: 100%;
+  }
+}
 /* ===================================================
    앱 공통 페이지 UI
    =================================================== */
