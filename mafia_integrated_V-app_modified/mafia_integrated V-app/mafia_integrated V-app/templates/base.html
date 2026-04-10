@@ -56,7 +56,7 @@
         </a>
     </nav>
 
-    <!-- 🔥 이용약관 동의 배너 -->
+    <div id="consent-overlay">
     <div id="consent-banner">
         <div class="consent-text">
             사이트를 사용하기 전에 이용약관에 동의해주세요.
@@ -67,22 +67,19 @@
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
-    <!-- 🔥 배너 동작 JS -->
     <script>
-        const banner = document.getElementById('consent-banner');
-        const btn = document.getElementById('consent-btn');
+    const overlay = document.getElementById('consent-overlay');
+    const btn = document.getElementById('consent-btn');
 
-        // 이미 동의했으면 숨김
-        if (localStorage.getItem('consentAccepted') === 'true') {
-            banner.style.display = 'none';
-        }
+    if (localStorage.getItem('consentAccepted') === 'true') {
+        overlay.style.display = 'none';
+    }
 
-        // 버튼 클릭 시
-        btn.addEventListener('click', function () {
-            localStorage.setItem('consentAccepted', 'true');
-            banner.style.display = 'none';
-        });
-    </script>
-
+    btn.addEventListener('click', function () {
+        localStorage.setItem('consentAccepted', 'true');
+        overlay.style.display = 'none';
+    });
+</script>
+</div
 </body>
 </html>
