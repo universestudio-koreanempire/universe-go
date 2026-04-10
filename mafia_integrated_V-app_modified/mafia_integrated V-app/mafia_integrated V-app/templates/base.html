@@ -55,5 +55,28 @@
 </nav>
     
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<div id="consent-banner">
+  <div class="consent-text">
+    사이트를 사용하기 전에 이용약관에 동의해주세요.
+    <a href="/privacy" class="consent-link">개인정보 처리 방침</a>
+  </div>
+  <button id="consent-btn">동의합니다</button>
+</div>
+
+<script>
+  const banner = document.getElementById('consent-banner');
+  const btn = document.getElementById('consent-btn');
+
+  if (localStorage.getItem('consentAccepted') === 'true') {
+    banner.style.display = 'none';
+  }
+
+  btn.addEventListener('click', function () {
+    localStorage.setItem('consentAccepted', 'true');
+    banner.style.display = 'none';
+  });
+</script>
+
 </body>
 </html>
