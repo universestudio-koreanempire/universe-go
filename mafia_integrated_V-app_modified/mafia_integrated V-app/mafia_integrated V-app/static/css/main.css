@@ -1167,6 +1167,45 @@ a { text-decoration: none; color: inherit; }
     font-size: 0.8rem !important;
 }
 
+/* 이용약관 배너 */
+#consent-banner {
+  position: fixed;
+  left: 0;
+  bottom: 90px; /* 🔥 이게 핵심 (탭바 위로 올림) */
+  width: 100%;
+  background: rgba(20,20,20,0.95);
+  color: white;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  z-index: 10000;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.35);
+}
+
+.consent-text {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.consent-link {
+  color: #55c71d;
+  margin-left: 8px;
+  text-decoration: underline;
+}
+
+#consent-btn {
+  background: #55c71d;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 /* ===================================================
    앱 공통 페이지 UI
    =================================================== */
@@ -1192,213 +1231,6 @@ a { text-decoration: none; color: inherit; }
 /* 페이지 바디 */
 .app-page-body {
     padding: 12px 12px 0;
-}
-
-/* ── 스토어 잔존 스타일 (미사용이어도 둬도 무방) ── */
-.app-points-card {
-    background: white;
-    border-radius: 14px;
-    padding: 16px 18px;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.app-points-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.app-points-label {
-    font-size: 0.72rem;
-    color: #aaa;
-    margin-bottom: 2px;
-}
-.app-points-value {
-    font-family: var(--font-display);
-    font-size: 1.3rem;
-    color: var(--green-primary);
-}
-.app-points-btn {
-    padding: 8px 18px;
-    background: var(--green-primary);
-    color: white;
-    border-radius: 20px;
-    font-size: 0.82rem;
-    font-weight: 700;
-}
-
-.app-warn-card {
-    background: #fff8e1;
-    border-radius: 12px;
-    padding: 14px 18px;
-    margin-bottom: 12px;
-    border-left: 4px solid #f0b429;
-    font-size: 0.85rem;
-    color: #7a6000;
-}
-
-.app-store-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.app-store-card {
-    background: white;
-    border-radius: 16px;
-    padding: 20px 18px;
-    box-shadow: 0 1px 8px rgba(0,0,0,0.08);
-    position: relative;
-    border: 2px solid transparent;
-    transition: border-color 0.2s;
-}
-.app-store-card:active { border-color: var(--green-primary); }
-
-.app-store-badge {
-    position: absolute;
-    top: 0;
-    right: 20px;
-    color: white;
-    font-size: 0.72rem;
-    font-weight: 900;
-    padding: 3px 12px;
-    border-radius: 0 0 10px 10px;
-}
-
-.app-store-top {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 14px;
-}
-.app-store-icon { font-size: 2.4rem; }
-.app-store-name {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    color: var(--dark);
-    margin-bottom: 4px;
-}
-.app-store-price-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-.app-store-original {
-    font-size: 0.82rem;
-    color: #bbb;
-    text-decoration: line-through;
-}
-.app-store-price {
-    font-family: var(--font-display);
-    font-size: 1.3rem;
-    color: #e74c3c;
-}
-.app-store-discount {
-    background: #fff0f0;
-    color: #e74c3c;
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 8px;
-}
-
-.app-store-benefits {
-    background: #f8f8f8;
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
-}
-.app-store-benefits-title {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #aaa;
-    margin-bottom: 10px;
-    letter-spacing: 0.5px;
-}
-.app-store-benefits-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
-.app-store-benefits-list li {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    font-size: 0.85rem;
-    color: #444;
-}
-.app-check {
-    color: var(--green-primary);
-    font-weight: 900;
-    flex-shrink: 0;
-}
-
-.app-store-btns {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.app-store-btn-points,
-.app-store-btn-cash {
-    width: 100%;
-    padding: 13px;
-    border-radius: 12px;
-    font-size: 0.92rem;
-    font-weight: 700;
-    font-family: var(--font-main);
-    cursor: pointer;
-    border: none;
-    transition: opacity 0.2s;
-}
-.app-store-btn-points {
-    background: var(--green-primary);
-    color: white;
-}
-.app-store-btn-cash {
-    background: white;
-    color: var(--teal-mid);
-    border: 2px solid var(--teal-mid);
-}
-.app-store-btn-points:active,
-.app-store-btn-cash:active { opacity: 0.75; }
-.app-store-btn-points:disabled,
-.app-store-btn-cash:disabled { opacity: 0.4; cursor: not-allowed; }
-
-/* 구매 내역 */
-.app-purchase-list { list-style: none; }
-.app-purchase-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 13px 16px;
-    border-bottom: 1px solid var(--gray-light);
-    flex-wrap: wrap;
-    gap: 6px;
-}
-.app-purchase-item:last-child { border-bottom: none; }
-.app-purchase-left { display: flex; align-items: center; gap: 8px; }
-.app-purchase-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.app-purchase-method {
-    color: white;
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 10px;
-}
-.app-purchase-name { font-size: 0.85rem; color: #333; font-weight: 500; }
-.app-purchase-date { font-size: 0.75rem; color: #aaa; }
-.app-purchase-amount { font-size: 0.85rem; font-weight: 700; color: #555; }
-.app-purchase-status {
-    background: #e8f5e9;
-    color: var(--green-dark);
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 10px;
 }
 
 /* ── 전체보기(sitemap) ── */
