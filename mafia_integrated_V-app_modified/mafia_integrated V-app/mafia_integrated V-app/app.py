@@ -423,89 +423,6 @@ SITE_NAME = "Universe Studio"   # 네비게이션, 푸터 로고에 표시되는
 # ===== 히어로 타이틀 설정 =====
 HERO_TITLE = "Mafia GO!"     # 회색 박스 안에 표시되는 이름
 
-# ===== 스토어 아이템 설정 =====
-# 아이템 추가/수정은 여기서만 하세요.
-# payment: 'points'=포인트 전용 / 'cash'=현금 전용 / 'both'=둘 다
-# original_price: 정가 (줄긋기 표시용, None이면 미표시)
-# badge: 상품 뱃지 텍스트 (None이면 미표시)
-STORE_ITEMS = [
-    {
-        'id': 1,
-        'name': '초보자 패키지',
-        'icon': '🌱',
-        'original_price': 6900,
-        'cash_price': 4900,
-        'points_price': None,
-        'payment': 'cash',
-        'category': '패키지',
-        'badge': '할인',
-        'benefits': [
-            '영웅 캐릭터 1종 무료 (선택)',
-            '광고 1주일 동안 없음',
-            '골드 5,000',
-            '유니버스 포인트 +5,000',
-            '"영광" 칭호 획득',
-            '파란색 프로필 테두리 획득',
-        ],
-    },
-    {
-        'id': 2,
-        'name': '고수 패키지',
-        'icon': '⚔️',
-        'original_price': 12900,
-        'cash_price': 10900,
-        'points_price': None,
-        'payment': 'cash',
-        'category': '패키지',
-        'badge': '인기',
-        'benefits': [
-            '전설 캐릭터 1종 무료 (선택)',
-            '광고 1달 동안 없음',
-            '골드 30,000',
-            '유니버스 포인트 +30,000',
-            '"초월" 칭호 획득',
-            '빛나는 프로필 테두리 획득',
-        ],
-    },
-    {
-        'id': 3,
-        'name': 'VIP 패키지',
-        'icon': '👑',
-        'original_price': None,
-        'cash_price': 10900,
-        'points_price': None,
-        'payment': 'cash',
-        'category': '패키지',
-        'badge': '월정액',
-        'benefits': [
-            '골드 +50,000 (결제마다)',
-            '유니버스 포인트+ 가입 자격',
-            '광고 없음',
-            '"VIP" 칭호 획득',
-            '골드 스킨 획득 (첫 결제 시)',
-            '금색 VIP 프로필 테두리 획득 (첫 결제 시)',
-        ],
-    },
-    {
-        'id': 4,
-        'name': '계정 초성장 패키지',
-        'icon': '🚀',
-        'original_price': None,
-        'cash_price': 15900,
-        'points_price': None,
-        'payment': 'cash',
-        'category': '패키지',
-        'badge': 'BEST',
-        'benefits': [
-            '희귀·영웅 캐릭터 모두 잠금 해제',
-            '골드 +40,000',
-            '유니버스 포인트+ 가입 자격',
-            '광고 없음',
-            '"성장" 칭호 획득',
-            '식물 프로필 테두리 획득',
-        ],
-    },
-]
 # 1사이클 = 위에서 날아오기(0.5초) + 머무기(2.5초) + 왼쪽으로 사라지기(0.5초) = 총 3.5초
 # 반복 사이에 잠깐 숨어있는 시간 0.5초 포함 → 총 주기 4초
 HERO_ANIMATION = """
@@ -629,6 +546,21 @@ def complaint_write():
         flash('민원이 성공적으로 접수되었습니다.', 'success')
         return redirect(url_for('complaint'))
     return render_template('complaint_write.html')
+
+@app.route('/complaint/board')
+def complaint_board():
+    import sqlite3
+
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row  # ← 이거 중요
+    c = conn.cursor()
+
+    c.execute('SELECT * FROM complaints ORDER BY id DESC')
+    posts = c.fetchall()
+
+    conn.close()
+
+    return render_template('board.html', posts=posts)
 
 @app.route('/privacy')
 def privacy():
