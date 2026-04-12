@@ -551,7 +551,7 @@ def complaint_write():
 def complaint_board():
     import sqlite3
 
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('mafia_go.db')
     conn.row_factory = sqlite3.Row  # ← 이거 중요
     c = conn.cursor()
 
