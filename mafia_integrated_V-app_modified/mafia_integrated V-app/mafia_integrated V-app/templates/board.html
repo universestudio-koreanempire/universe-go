@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}민원 게시판{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>민원 게시판</h1>
+    <p>접수된 민원 내역을 확인할 수 있습니다.</p>
+</div>
+
+<div class="content-page">
+
+    {% if posts %}
+        {% for post in posts %}
+        <div style="
+            background: #1e1e1e;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        ">
+
+            <!-- 제목 -->
+            <div style="font-size:18px; font-weight:bold; margin-bottom:6px;">
+                {{ post['title'] }}
+            </div>
+
+            <!-- 정보 -->
+            <div style="font-size:12px; color:#aaa; margin-bottom:10px;">
+                작성자: {{ post['username'] }} |
+                분류: {{ post['category'] }} |
+                상태: {{ post['status'] }} |
+                {{ post['created'] }}
+            </div>
+
+            <!-- 내용 -->
+            <div style="font-size:14px; line-height:1.5;">
+                {{ post['content'] }}
+            </div>
+
+        </div>
+        {% endfor %}
+
+    {% else %}
+        <div class="privacy-box">
+            등록된 민원이 없습니다.
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
