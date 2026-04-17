@@ -424,22 +424,86 @@ def ai_chat_api():
 # ===== 사이트 이름 설정 =====
 SITE_NAME = "Universe Studio"   # 네비게이션, 푸터 로고에 표시되는 이름
 
-# ===== 히어로 타이틀 설정 =====
-HERO_TITLE = "Mafia GO!"     # 회색 박스 안에 표시되는 이름
-
-# 1사이클 = 위에서 날아오기(0.5초) + 머무기(2.5초) + 왼쪽으로 사라지기(0.5초) = 총 3.5초
-# 반복 사이에 잠깐 숨어있는 시간 0.5초 포함 → 총 주기 4초
+# ===== 히어로 애니메이션 설정 =====
 HERO_ANIMATION = """
 <style>
-@keyframes heroLoop {
-    0%                         { transform: translateX(160px);  opacity: 0; }  /* 시작: 오른쪽에서 */
-    12.5%                      { transform: translateX(0);      opacity: 1; }  /* 0.5초: 제자리 도착 */
-    75%                        { transform: translateX(0);      opacity: 1; }  /* 3.0초: 머무는 중 */
-    87.5%                      { transform: translateX(-160px); opacity: 0; }  /* 3.5초: 왼쪽으로 사라짐 */
-    87.6%, 100%                { transform: translateX(160px);  opacity: 0; }  /* 대기 후 다시 오른쪽으로 */
+.hero-rotator {
+    position: relative;
+    width: 100%;
+    min-height: 220px;
 }
-.hero-inner-box {
-    animation: heroLoop 4s ease infinite;
+
+.hero-slide {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 100%;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.hero-slide-1 {
+    animation: heroSwap1 8s ease-in-out infinite;
+}
+
+.hero-slide-2 {
+    animation: heroSwap2 8s ease-in-out infinite;
+}
+
+@keyframes heroSwap1 {
+    0% {
+        opacity: 0;
+        transform: translateX(calc(-50% + 160px));
+        pointer-events: none;
+    }
+    8% {
+        opacity: 1;
+        transform: translateX(-50%);
+        pointer-events: auto;
+    }
+    42% {
+        opacity: 1;
+        transform: translateX(-50%);
+        pointer-events: auto;
+    }
+    50% {
+        opacity: 0;
+        transform: translateX(calc(-50% - 160px));
+        pointer-events: none;
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(calc(-50% - 160px));
+        pointer-events: none;
+    }
+}
+
+@keyframes heroSwap2 {
+    0% {
+        opacity: 0;
+        transform: translateX(calc(-50% + 160px));
+        pointer-events: none;
+    }
+    50% {
+        opacity: 0;
+        transform: translateX(calc(-50% + 160px));
+        pointer-events: none;
+    }
+    58% {
+        opacity: 1;
+        transform: translateX(-50%);
+        pointer-events: auto;
+    }
+    92% {
+        opacity: 1;
+        transform: translateX(-50%);
+        pointer-events: auto;
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(calc(-50% - 160px));
+        pointer-events: none;
+    }
 }
 </style>
 """
