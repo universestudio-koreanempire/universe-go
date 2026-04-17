@@ -11,10 +11,22 @@
 <section class="app-hero">
     <div class="app-hero-bg"></div>
     <div class="app-hero-content">
-        <div class="app-hero-game-btn" onclick="location.href='/game'">
-            <div class="app-hero-screen"></div>
-            <span class="app-hero-title">{{ hero_title }}</span>
-            <span class="app-hero-sub">탭하여 게임 시작 ▶</span>
+        <div class="hero-rotator">
+
+            <div class="app-hero-game-btn hero-slide hero-slide-1"
+                 onclick="location.href='/game'">
+                <div class="app-hero-screen"></div>
+                <span class="app-hero-title">Mafia GO!</span>
+                <span class="app-hero-sub">탭하여 게임 시작 ▶</span>
+            </div>
+
+            <div class="app-hero-game-btn hero-slide hero-slide-2"
+                 onclick="location.href='https://create-go.onrender.com'">
+                <div class="app-hero-screen"></div>
+                <span class="app-hero-title">Create GO!</span>
+                <span class="app-hero-sub">탭하여 서비스 이동 ▶</span>
+            </div>
+
         </div>
     </div>
     <div class="app-hero-actions">
