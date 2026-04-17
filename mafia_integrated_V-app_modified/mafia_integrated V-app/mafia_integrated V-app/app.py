@@ -361,9 +361,13 @@ def index():
     db = get_db()
     notices = db.execute('SELECT * FROM notices ORDER BY id DESC LIMIT 3').fetchall()
     db.close()
-    return render_template('index.html', notices=notices,
-                           ad_panorama=AD_PANORAMA,
-                           hero_animation=HERO_ANIMATION, hero_title=HERO_TITLE)
+
+    return render_template(
+        'index.html',
+        notices=notices,
+        ad_panorama=AD_PANORAMA,
+        hero_animation=HERO_ANIMATION
+    )
 
 @app.route('/ai-chat')
 def ai_chat():
