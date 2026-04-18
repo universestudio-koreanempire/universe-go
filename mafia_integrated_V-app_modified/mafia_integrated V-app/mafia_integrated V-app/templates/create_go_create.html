@@ -64,6 +64,130 @@
 
 </div>
 
-<script>/* 기존 JS 그대로 유지 */</script>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const sizeInput = document.getElementById('size');
+const eraserBtn = document.getElementById('eraserBtn');
+let drawing = false;
+let brushSize = 4;
+let history = [];
+let eraser = false;
+let lastPoint = null;
+let currentColor = '#000000';
+
+ctx.fillStyle = '#ffffff';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+
+function getCanvasPoint(event) {
+    const rect = canvas.getBoundingClientRect();
+    const source = event.touches ? event.touches[0] : event;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    return {
+        x: (source.clientX - rect.left) * scaleX,
+        y: (source.clientY - rect.top) * scaleY,
+    };
+}
+
+function saveState() {
+    history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    if (history.length > 30) {
+        history.shift();
+    }
+}
+
+function startDrawing(event) {
+    event.preventDefault();
+    drawing = true;
+    saveState();
+    lastPoint = getCanvasPoint(event);
+    draw(event);
+}
+
+function draw(event) {
+    if (!drawing) return;
+    event.preventDefault();
+
+    const point = getCanvasPoint(event);
+    ctx.strokeStyle = eraser ? '#ffffff' : currentColor;
+    ctx.lineWidth = brushSize;
+
+    ctx.beginPath();
+    ctx.moveTo(lastPoint.x, lastPoint.y);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+
+    lastPoint = point;
+}
+
+function stopDrawing(event) {
+    if (event) event.preventDefault();
+    drawing = false;
+    lastPoint = null;
+}
+
+function clearCanvas() {
+    saveState();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function toggleEraser() {
+    eraser = !eraser;
+    eraserBtn.classList.toggle('active-tool', eraser);
+}
+
+function setColor(color, button) {
+    currentColor = color;
+    eraser = false;
+    eraserBtn.classList.remove('active-tool');
+    document.querySelectorAll('.color-btn').forEach((btn) => btn.classList.remove('active'));
+    button.classList.add('active');
+}
+
+function undo() {
+    if (history.length === 0) return;
+    const previous = history.pop();
+    ctx.putImageData(previous, 0, 0);
+}
+
+sizeInput.addEventListener('input', (event) => {
+    brushSize = Number(event.target.value);
+});
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('mouseleave', stopDrawing);
+canvas.addEventListener('touchstart', startDrawing, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+canvas.addEventListener('touchend', stopDrawing, { passive: false });
+canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+
+function submitPost() {
+    const data = new FormData();
+    data.append('title', document.getElementById('title').value);
+    data.append('content', document.getElementById('content').value);
+    data.append('image_data', canvas.toDataURL('image/png'));
+
+    fetch('/create-go/create', { method: 'POST', body: data })
+        .then((response) => response.json())
+        .then((result) => {
+            if (result.success) {
+                location.href = result.redirect;
+            } else {
+                alert(result.message);
+            }
+        })
+        .catch(() => {
+            alert('작품 등록 중 오류가 발생했습니다.');
+        });
+}
+</script>
 </body>
 </html>
