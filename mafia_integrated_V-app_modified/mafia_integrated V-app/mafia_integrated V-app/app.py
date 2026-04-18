@@ -216,17 +216,25 @@ def init_db():
 
     cur.execute('''
         CREATE TABLE IF NOT EXISTS complaints (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            category TEXT NOT NULL,
-            title    TEXT NOT NULL,
-            content  TEXT NOT NULL,
-            status   TEXT NOT NULL DEFAULT '신창 완료',
-            manager_name TEXT,
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            username       TEXT NOT NULL,
+            category       TEXT NOT NULL,
+            title          TEXT NOT NULL,
+            content        TEXT NOT NULL,
+            status         TEXT NOT NULL DEFAULT '신청 완료',
+            manager_name   TEXT,
             answer_content TEXT,
-            created  TEXT NOT NULL
+            created        TEXT NOT NULL
         )
     ''')
+
+    complaint_columns = [row[1] for row in cur.execute("PRAGMA table_info(complaints)").fetchall()]
+
+    if 'manager_name' not in complaint_columns:
+        cur.execute("ALTER TABLE complaints ADD COLUMN manager_name TEXT")
+
+    if 'answer_content' not in complaint_columns:
+        cur.execute("ALTER TABLE complaints ADD COLUMN answer_content TEXT")
 
     cur.execute('''
         CREATE TABLE IF NOT EXISTS notices (
@@ -260,13 +268,13 @@ def init_db():
     ''')
 
     cur.execute('''
-    CREATE TABLE IF NOT EXISTS online_nicknames (
-        player_id  TEXT PRIMARY KEY,
-        nickname   TEXT NOT NULL,
-        is_active  INTEGER NOT NULL DEFAULT 1,
-        updated_at TEXT NOT NULL
-    )
-''')
+        CREATE TABLE IF NOT EXISTS online_nicknames (
+            player_id  TEXT PRIMARY KEY,
+            nickname   TEXT NOT NULL,
+            is_active  INTEGER NOT NULL DEFAULT 1,
+            updated_at TEXT NOT NULL
+        )
+    ''')
 
     cur.execute('''
         CREATE TABLE IF NOT EXISTS posts (
@@ -276,6 +284,9 @@ def init_db():
             image_path TEXT NOT NULL
         )
     ''')
+
+    conn.commit()
+    conn.close()
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
