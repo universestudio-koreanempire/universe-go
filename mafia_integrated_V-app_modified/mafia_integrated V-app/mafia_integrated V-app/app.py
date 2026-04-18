@@ -378,7 +378,6 @@ def create_go_create():
 def create_go_uploaded_file(filename):
     return send_from_directory(CREATE_GO_UPLOAD_FOLDER, filename)
 
-
 @app.route('/create-go/create', methods=['POST'])
 def create_go_create_post():
     title = request.form.get('title', '').strip()
@@ -393,13 +392,13 @@ def create_go_create_post():
     except Exception as e:
         return jsonify({'success': False, 'message': f'이미지 저장 실패: {str(e)}'}), 400
 
-    db = get_db()
-    db.execute(
-        'INSERT INTO posts (title, content, image_path) VALUES (?, ?, ?)',
-        (title, content, image_filename)
+    post = Post(
+        title=title,
+        content=content,
+        image_path=image_filename
     )
-    db.commit()
-    db.close()
+    db_pg.session.add(post)
+    db_pg.session.commit()
 
     return jsonify({
         'success': True,
