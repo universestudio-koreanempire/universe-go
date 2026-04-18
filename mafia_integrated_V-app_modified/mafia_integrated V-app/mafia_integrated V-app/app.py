@@ -201,7 +201,7 @@ os.makedirs(CREATE_GO_UPLOAD_FOLDER, exist_ok=True)
 # ===== DB 초기화 =====
 def init_db():
     conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()8
+    cur = conn.cursor()
 
     cur.execute('''
         CREATE TABLE IF NOT EXISTS complaints (
