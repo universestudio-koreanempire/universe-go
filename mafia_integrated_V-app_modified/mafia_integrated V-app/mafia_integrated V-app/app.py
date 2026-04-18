@@ -222,6 +222,8 @@ def init_db():
             title    TEXT NOT NULL,
             content  TEXT NOT NULL,
             status   TEXT NOT NULL DEFAULT '신창 완료',
+            manager_name TEXT,
+            answer_content TEXT,
             created  TEXT NOT NULL
         )
     ''')
@@ -274,18 +276,6 @@ def init_db():
             image_path TEXT NOT NULL
         )
     ''')
-
-    cur.execute('SELECT COUNT(*) FROM notices')
-    if cur.fetchone()[0] == 0:
-        default_notices = [
-            ('유니버스 서비스 오픈 안내',   '안녕하세요. 유니버스 Mafia GO! 서비스가 정식 오픈하였습니다. 많은 이용 부탁드립니다.', '2024-01-15'),
-            ('개인정보 처리방침 개정 안내', '개인정보 처리방침이 일부 개정되었습니다. 자세한 내용을 확인해 주세요.',               '2024-01-10'),
-            ('시스템 점검 안내 (1월 20일)', '1월 20일 오전 2시~4시 시스템 점검이 진행될 예정입니다. 이용에 참고 부탁드립니다.',   '2024-01-08'),
-        ]
-        cur.executemany('INSERT INTO notices (title, content, created) VALUES (?, ?, ?)', default_notices)
-
-    conn.commit()
-    conn.close()
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
