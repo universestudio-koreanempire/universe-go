@@ -359,22 +359,15 @@ def index():
 def create_go_home():
     return render_template('create_go.html')
 
-
 @app.route('/create-go/board')
 def create_go_board():
-    db = get_db()
-    posts = db.execute('SELECT * FROM posts ORDER BY id DESC').fetchall()
-    db.close()
+    posts = Post.query.order_by(Post.id.desc()).all()
     return render_template('create_go_board.html', posts=posts)
-
 
 @app.route('/create-go/auction')
 def create_go_auction():
-    db = get_db()
-    posts = db.execute('SELECT * FROM posts ORDER BY id DESC').fetchall()
-    db.close()
+    posts = Post.query.order_by(Post.id.desc()).all()
     return render_template('create_go_auction.html', posts=posts)
-
 
 @app.route('/create-go/create')
 def create_go_create():
