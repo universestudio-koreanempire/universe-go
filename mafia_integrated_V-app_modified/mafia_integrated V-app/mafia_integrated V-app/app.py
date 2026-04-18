@@ -362,6 +362,27 @@ def deactivate_nickname(player_id):
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+def save_create_go_base64_image(data_url):
+    if not data_url or ',' not in data_url:
+        raise ValueError('잘못된 이미지 데이터입니다.')
+
+    header, encoded = data_url.split(',', 1)
+    if 'base64' not in header:
+        raise ValueError('Base64 이미지가 아닙니다.')
+
+    try:
+        image_data = base64.b64decode(encoded)
+    except (binascii.Error, ValueError) as exc:
+        raise ValueError('이미지 디코딩에 실패했습니다.') from exc
+
+    filename = f"{uuid.uuid4().hex}.png"
+    file_path = os.path.join(CREATE_GO_UPLOAD_FOLDER, filename)
+
+    with open(file_path, 'wb') as f:
+        f.write(image_data)
+
+    return filename
+
 @app.context_processor
 def inject_site_name():
     is_admin = session.get('user') in ADMIN_USERS
