@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 from datetime import datetime, date
 from openai import OpenAI
+from flask_sqlalchemy import SQLAlchemy
 import sqlite3
 import os
 import uuid
