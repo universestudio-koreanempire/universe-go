@@ -18,6 +18,7 @@
             <div class="notice-meta" style="line-height:1.8;">
                 작성자: {{ c.username }} |
                 분류: {{ c.category }} |
+                민원 ID: {{ c.id }} |
                 상태: {{ c.status }} |
                 접수일: {{ c.created }}
                 {% if c.manager_name %}<br>담당자: {{ c.manager_name }}{% endif %}
