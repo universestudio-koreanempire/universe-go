@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create GO 게시판</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="app-body">
+<div class="app-shell">
+<a href="/create-go" class="back-link">← 홈으로</a>
+<div class="section-title">📋 게시판</div>
+<div class="post-grid">
+{% if posts %}
+{% for post in posts %}
+<div class="post-card">
+<div class="post-title">{{ post.title }}</div>
+<p class="post-text">{{ post.content }}</p>
+<img src="{{ url_for('create_go_uploaded_file', filename=post.image_path) }}">
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-box">등록된 작품이 없습니다.</div>
+{% endif %}
+</div>
+</div>
+</body>
+</html>
