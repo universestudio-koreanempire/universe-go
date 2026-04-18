@@ -1,0 +1,344 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #081426;
+    --bg-deep: #050d1a;
+    --panel: #142642;
+    --panel-2: #0f2038;
+    --text: #f5f7fb;
+    --muted: #a9b5c8;
+    --line: rgba(255, 255, 255, 0.08);
+    --accent: #31d85f;
+    --accent-dark: #1db64b;
+    --danger: #ff6b6b;
+    --shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(180deg, #071120 0%, #0a1830 100%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+body.app-body {
+    min-height: 100vh;
+}
+
+.app-shell {
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 18px 14px 36px;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    color: rgba(255,255,255,0.92);
+}
+
+.topbar-title {
+    font-size: 1.7rem;
+    font-weight: 800;
+    text-align: center;
+    margin: 14px 0 4px;
+}
+
+.topbar-sub {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 18px;
+}
+
+.card {
+    background: linear-gradient(180deg, rgba(20,38,66,0.98), rgba(15,32,56,0.98));
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 18px;
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 1.9rem;
+    font-weight: 800;
+    text-align: center;
+    margin: 6px 0 18px;
+}
+
+.section-title.small {
+    font-size: 1.5rem;
+    margin-bottom: 14px;
+}
+
+.nav-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.nav-btn, .action-btn, .primary-btn, .secondary-btn, .danger-btn {
+    border: 0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nav-btn:hover, .action-btn:hover, .primary-btn:hover, .secondary-btn:hover, .danger-btn:hover {
+    transform: translateY(-1px);
+}
+
+.primary-btn, .action-btn, .nav-btn {
+    background: var(--accent);
+    color: #082010;
+}
+
+.secondary-btn {
+    background: #243856;
+    color: var(--text);
+}
+
+.secondary-btn.active-tool {
+    background: #3d5d82;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28);
+}
+
+.danger-btn {
+    background: #27415f;
+    color: #ffdddd;
+}
+
+.field-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.field-grow {
+    flex: 1;
+}
+
+.text-input, .text-area, .range-input {
+    width: 100%;
+    border: 0;
+    outline: none;
+    border-radius: 14px;
+    background: #f4f4f5;
+    color: #1f2937;
+    padding: 14px 16px;
+    font-size: 1rem;
+}
+
+.text-area {
+    resize: vertical;
+    min-height: 96px;
+}
+
+.profile-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 14px;
+    color: rgba(255,255,255,0.95);
+    font-size: 1.05rem;
+}
+
+.coin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.08);
+    color: #ffd76b;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.canvas-wrap {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 10px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+#canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #fff;
+    border-radius: 14px;
+    touch-action: none;
+}
+
+.toolbar {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.tool-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 12px;
+    align-items: center;
+}
+
+.tool-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.tool-note {
+    color: var(--muted);
+    font-size: 0.92rem;
+    text-align: center;
+}
+
+.color-palette {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.color-btn {
+    border: 0;
+    border-radius: 14px;
+    padding: 12px 8px;
+    font-size: 0.98rem;
+    font-weight: 800;
+    cursor: pointer;
+    background: var(--accent);
+    color: #082010;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+}
+
+.color-btn.active {
+    outline: 3px solid rgba(255,255,255,0.92);
+    transform: translateY(-1px);
+}
+
+.color-btn.white {
+    background: #ffffff;
+    color: #222;
+}
+
+.color-empty {
+    visibility: hidden;
+}
+
+.post-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.post-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px;
+}
+
+.post-card img {
+    width: 100%;
+    border-radius: 14px;
+    display: block;
+    margin-top: 10px;
+    background: #fff;
+}
+
+.post-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin: 0 0 8px;
+}
+
+.post-text {
+    color: #e4ebf5;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.post-meta {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin-top: 10px;
+}
+
+.auction-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.bid-box {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.bid-input {
+    flex: 1;
+    min-width: 120px;
+    border: 0;
+    outline: none;
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: #f4f4f5;
+}
+
+.empty-box {
+    text-align: center;
+    color: var(--muted);
+    padding: 28px 16px;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+@media (max-width: 420px) {
+    .app-shell {
+        padding: 14px 10px 28px;
+    }
+
+    .nav-grid,
+    .tool-actions,
+    .tool-row,
+    .color-palette {
+        grid-template-columns: 1fr;
+    }
+
+    .field-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
