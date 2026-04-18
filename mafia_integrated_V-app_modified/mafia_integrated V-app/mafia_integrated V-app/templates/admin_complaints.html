@@ -7,7 +7,7 @@
 </div>
 
 <div class="content-page">
-    <div style="margin-bottom:20px;">
+    <div style="margin-bottom:20px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
         <a href="{{ url_for('index') }}" class="back-btn">← 홈으로</a>
     </div>
 
@@ -15,14 +15,72 @@
         {% for c in complaints %}
         <div class="notice-detail" style="margin-bottom:20px;">
             <h2>{{ c.title }}</h2>
-            <div class="notice-meta">
+            <div class="notice-meta" style="line-height:1.8;">
                 작성자: {{ c.username }} |
                 분류: {{ c.category }} |
                 상태: {{ c.status }} |
                 접수일: {{ c.created }}
+                {% if c.manager_name %}<br>담당자: {{ c.manager_name }}{% endif %}
             </div>
-            <div class="notice-body">
+
+            <div class="notice-body" style="margin-top:14px; white-space:pre-wrap;">
                 {{ c.content }}
+            </div>
+
+            {% if c.answer_content %}
+            <div style="margin-top:16px; padding:14px; border-radius:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08);">
+                <div style="font-weight:700; margin-bottom:8px;">답변 내용</div>
+                <div style="white-space:pre-wrap; line-height:1.7;">{{ c.answer_content }}</div>
+            </div>
+            {% endif %}
+
+            <div style="margin-top:18px; padding:16px; border-radius:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);">
+                {% if c.status == '처리 완료' %}
+                    <div style="font-weight:700; margin-bottom:10px; color:#86efac;">처리 완료된 민원입니다.</div>
+                    <div style="font-size:14px; color:#cbd5e1; line-height:1.7; margin-bottom:14px;">
+                        처리 완료 이후에는 상태를 변경할 수 없습니다.
+                    </div>
+                {% else %}
+                    <form method="POST" action="{{ url_for('update_complaint_status', complaint_id=c.id) }}" style="display:grid; gap:12px;">
+                        <div>
+                            <label for="status_{{ c.id }}" style="display:block; font-weight:700; margin-bottom:6px;">상태 변경</label>
+                            <select id="status_{{ c.id }}" name="status" required
+                                    onchange="toggleComplaintFields('{{ c.id }}', this.value)"
+                                    style="width:100%; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:#111827; color:#fff;">
+                                {% set statuses = ['신청 완료', '접수 완료', '담당자 배정', '처리 완료', '처리 중지', '반려'] %}
+                                {% for status in statuses %}
+                                <option value="{{ status }}" {% if c.status == status %}selected{% endif %}>{{ status }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div id="manager_wrap_{{ c.id }}" style="display:{% if c.status in ['담당자 배정', '처리 완료'] %}block{% else %}none{% endif %};">
+                            <label for="manager_name_{{ c.id }}" style="display:block; font-weight:700; margin-bottom:6px;">담당자 이름</label>
+                            <input id="manager_name_{{ c.id }}" type="text" name="manager_name"
+                                   value="{{ c.manager_name or '' }}"
+                                   placeholder="담당자 이름 입력"
+                                   style="width:100%; box-sizing:border-box; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:#111827; color:#fff;">
+                        </div>
+
+                        <div id="answer_wrap_{{ c.id }}" style="display:{% if c.status == '처리 완료' %}block{% else %}none{% endif %};">
+                            <label for="answer_content_{{ c.id }}" style="display:block; font-weight:700; margin-bottom:6px;">답변 내용</label>
+                            <textarea id="answer_content_{{ c.id }}" name="answer_content"
+                                      placeholder="처리 완료 시 답변 내용을 입력하세요"
+                                      style="width:100%; min-height:140px; box-sizing:border-box; padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:#111827; color:#fff; resize:vertical;">{{ c.answer_content or '' }}</textarea>
+                        </div>
+
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button type="submit" class="back-btn" style="border:none; cursor:pointer;">상태 저장</button>
+                        </div>
+                    </form>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('delete_complaint', complaint_id=c.id) }}" onsubmit="return confirm('이 민원을 삭제하시겠습니까?');" style="margin-top:12px;">
+                    <button type="submit"
+                            style="padding:10px 16px; border:none; border-radius:10px; background:#b91c1c; color:#fff; font-weight:700; cursor:pointer;">
+                        민원 삭제
+                    </button>
+                </form>
             </div>
         </div>
         {% endfor %}
@@ -32,4 +90,26 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+function toggleComplaintFields(id, status) {
+    const managerWrap = document.getElementById('manager_wrap_' + id);
+    const answerWrap = document.getElementById('answer_wrap_' + id);
+    const managerInput = document.getElementById('manager_name_' + id);
+    const answerInput = document.getElementById('answer_content_' + id);
+
+    const needManager = (status === '담당자 배정' || status === '처리 완료');
+    const needAnswer = (status === '처리 완료');
+
+    managerWrap.style.display = needManager ? 'block' : 'none';
+    answerWrap.style.display = needAnswer ? 'block' : 'none';
+
+    if (!needManager && managerInput) {
+        managerInput.value = '';
+    }
+    if (!needAnswer && answerInput) {
+        answerInput.value = '';
+    }
+}
+</script>
 {% endblock %}
