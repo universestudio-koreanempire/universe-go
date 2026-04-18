@@ -14,20 +14,15 @@ server_names = {}
 app = Flask(__name__)
 app.secret_key = 'mafia_go_secret_key_2024'
 
-def render_online_shell(title, subtitle, inner_html):
-    return f'''
-    <!DOCTYPE html>
-    <html>
-    <body>
-        <h1>{title}</h1>
-        <p>{subtitle}</p>
-        {inner_html}
-    </body>
-    </html>
-    '''
+database_url = os.getenv("DATABASE_URL")
 
-app = Flask(__name__)
-app.secret_key = 'mafia_go_secret_key_2024'
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db_pg = SQLAlchemy(app)
 
 def render_online_shell(title, subtitle, inner_html):
     return f'''
