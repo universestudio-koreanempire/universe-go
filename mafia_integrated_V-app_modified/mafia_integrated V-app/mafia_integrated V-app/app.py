@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from datetime import datetime, date
 from openai import OpenAI
 import sqlite3
-import hashlib
 import os
 import uuid
 import base64
@@ -202,17 +201,7 @@ os.makedirs(CREATE_GO_UPLOAD_FOLDER, exist_ok=True)
 # ===== DB 초기화 =====
 def init_db():
     conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT    UNIQUE NOT NULL,
-            email    TEXT    UNIQUE,
-            password TEXT    NOT NULL,
-            created  TEXT    NOT NULL
-        )
-    ''')
+    cur = conn.cursor()8
 
     cur.execute('''
         CREATE TABLE IF NOT EXISTS complaints (
@@ -242,28 +231,6 @@ def init_db():
             title   TEXT NOT NULL,
             content TEXT NOT NULL,
             created TEXT NOT NULL
-        )
-    ''')
-
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS purchases (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            username   TEXT NOT NULL,
-            item_id    INTEGER NOT NULL,
-            item_name  TEXT NOT NULL,
-            method     TEXT NOT NULL,
-            amount     TEXT NOT NULL,
-            status     TEXT NOT NULL DEFAULT '완료',
-            created    TEXT NOT NULL
-        )
-    ''')
-
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS rewards (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            amount   INTEGER NOT NULL DEFAULT 10,
-            created  TEXT NOT NULL
         )
     ''')
 
