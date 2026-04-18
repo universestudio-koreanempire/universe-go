@@ -221,7 +221,7 @@ def init_db():
             category TEXT NOT NULL,
             title    TEXT NOT NULL,
             content  TEXT NOT NULL,
-            status   TEXT NOT NULL DEFAULT '접수 완료',
+            status   TEXT NOT NULL DEFAULT '신창 완료',
             created  TEXT NOT NULL
         )
     ''')
