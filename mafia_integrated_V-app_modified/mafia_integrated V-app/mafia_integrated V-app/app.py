@@ -786,6 +786,76 @@ def admin_complaints():
 
     return render_template('admin_complaints.html', complaints=complaints)
 
+@app.route('/admin/complaints/<int:complaint_id>/status', methods=['POST'])
+def update_complaint_status(complaint_id):
+    if session.get('user') not in ADMIN_USERS:
+        return redirect(url_for('index'))
+
+    new_status = request.form.get('status', '').strip()
+    manager_name = request.form.get('manager_name', '').strip()
+    answer_content = request.form.get('answer_content', '').strip()
+
+    allowed_status = ['신청 완료', '접수 완료', '담당자 배정', '처리 완료', '처리 중지', '반려']
+
+    if new_status not in allowed_status:
+        return redirect(url_for('admin_complaints'))
+
+    db = get_db()
+
+    # 현재 상태 확인 (처리 완료면 변경 불가)
+    current = db.execute(
+        'SELECT status FROM complaints WHERE id = ?',
+        (complaint_id,)
+    ).fetchone()
+
+    if current and current['status'] == '처리 완료':
+        db.close()
+        return redirect(url_for('admin_complaints'))
+
+    # 상태별 로직
+    if new_status == '담당자 배정':
+        if not manager_name:
+            db.close()
+            return redirect(url_for('admin_complaints'))
+
+        db.execute(
+            'UPDATE complaints SET status=?, manager_name=?, answer_content=NULL WHERE id=?',
+            (new_status, manager_name, complaint_id)
+        )
+
+    elif new_status == '처리 완료':
+        if not manager_name or not answer_content:
+            db.close()
+            return redirect(url_for('admin_complaints'))
+
+        db.execute(
+            'UPDATE complaints SET status=?, manager_name=?, answer_content=? WHERE id=?',
+            (new_status, manager_name, answer_content, complaint_id)
+        )
+
+    elif new_status in ['신청 완료', '접수 완료', '처리 중지', '반려']:
+        db.execute(
+            'UPDATE complaints SET status=?, manager_name=NULL, answer_content=NULL WHERE id=?',
+            (new_status, complaint_id)
+        )
+
+    db.commit()
+    db.close()
+
+    return redirect(url_for('admin_complaints'))
+
+@app.route('/admin/complaints/<int:complaint_id>/delete', methods=['POST'])
+def delete_complaint(complaint_id):
+    if session.get('user') not in ADMIN_USERS:
+        return redirect(url_for('index'))
+
+    db = get_db()
+    db.execute('DELETE FROM complaints WHERE id=?', (complaint_id,))
+    db.commit()
+    db.close()
+
+    return redirect(url_for('admin_complaints'))
+
 @app.route('/logout')
 def logout():
     session.pop('user', None)
