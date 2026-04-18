@@ -194,6 +194,37 @@ DB_PATH = os.path.join(os.path.dirname(__file__), 'mafia_go.db')
 CREATE_GO_UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'data', 'create_go_uploads')
 os.makedirs(CREATE_GO_UPLOAD_FOLDER, exist_ok=True)
 
+class Complaint(db_pg.Model):
+    __tablename__ = "complaints"
+
+    id = db_pg.Column(db_pg.Integer, primary_key=True)
+    username = db_pg.Column(db_pg.String(100), nullable=False)
+    category = db_pg.Column(db_pg.String(100), nullable=False)
+    title = db_pg.Column(db_pg.String(200), nullable=False)
+    content = db_pg.Column(db_pg.Text, nullable=False)
+    status = db_pg.Column(db_pg.String(50), nullable=False, default="신청 완료")
+    manager_name = db_pg.Column(db_pg.String(100), nullable=True)
+    answer_content = db_pg.Column(db_pg.Text, nullable=True)
+    created = db_pg.Column(db_pg.String(20), nullable=False)
+
+
+class Notice(db_pg.Model):
+    __tablename__ = "notices"
+
+    id = db_pg.Column(db_pg.Integer, primary_key=True)
+    title = db_pg.Column(db_pg.String(200), nullable=False)
+    content = db_pg.Column(db_pg.Text, nullable=False)
+    created = db_pg.Column(db_pg.String(20), nullable=False)
+
+
+class Post(db_pg.Model):
+    __tablename__ = "posts"
+
+    id = db_pg.Column(db_pg.Integer, primary_key=True)
+    title = db_pg.Column(db_pg.String(200), nullable=False)
+    content = db_pg.Column(db_pg.Text, nullable=False)
+    image_path = db_pg.Column(db_pg.String(500), nullable=False)
+
 # ===== DB 초기화 =====
 def init_db():
     conn = sqlite3.connect(DB_PATH)
