@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 from datetime import datetime, date
 from openai import OpenAI
 import sqlite3
 import hashlib
 import os
 import uuid
+import base64
+import binascii
 invite_ips = {}
 heartbeats = {}
 server_names = {}
@@ -194,6 +196,8 @@ AD_PANORAMA = """
 """
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'mafia_go.db')
+CREATE_GO_UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'data', 'create_go_uploads')
+os.makedirs(CREATE_GO_UPLOAD_FOLDER, exist_ok=True)
 
 # ===== DB 초기화 =====
 def init_db():
@@ -261,6 +265,15 @@ def init_db():
         updated_at TEXT NOT NULL
     )
 ''')
+
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            image_path TEXT NOT NULL
+        )
+    ''')
 
     cur.execute('SELECT COUNT(*) FROM notices')
     if cur.fetchone()[0] == 0:
