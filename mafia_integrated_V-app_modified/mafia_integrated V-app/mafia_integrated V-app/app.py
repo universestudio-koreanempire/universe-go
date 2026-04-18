@@ -344,12 +344,9 @@ def inject_site_name():
     return dict(site_name=SITE_NAME, is_admin=is_admin)
 
 # ===== 라우트 =====
-
 @app.route('/')
 def index():
-    db = get_db()
-    notices = db.execute('SELECT * FROM notices ORDER BY id DESC LIMIT 3').fetchall()
-    db.close()
+    notices = Notice.query.order_by(Notice.id.desc()).limit(3).all()
 
     return render_template(
         'index.html',
