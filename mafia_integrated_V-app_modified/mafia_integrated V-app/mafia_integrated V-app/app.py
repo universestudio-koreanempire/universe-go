@@ -566,21 +566,26 @@ def notice_write():
     if session.get('user') not in ADMIN_USERS:
         flash('관리자만 접근할 수 있습니다.', 'error')
         return redirect(url_for('notices_list'))
+
     if request.method == 'POST':
-        title   = request.form.get('title', '').strip()
+        title = request.form.get('title', '').strip()
         content = request.form.get('content', '').strip()
+
         if not title or not content:
             flash('제목과 내용을 모두 입력해주세요.', 'error')
             return render_template('notice_write.html')
-        db = get_db()
-        db.execute(
-            'INSERT INTO notices (title, content, created) VALUES (?, ?, ?)',
-            (title, content, datetime.now().strftime('%Y-%m-%d'))
+
+        notice = Notice(
+            title=title,
+            content=content,
+            created=datetime.now().strftime('%Y-%m-%d')
         )
-        db.commit()
-        db.close()
+        db_pg.session.add(notice)
+        db_pg.session.commit()
+
         flash('공지사항이 등록되었습니다.', 'success')
         return redirect(url_for('notices_list'))
+
     return render_template('notice_write.html')
 
 @app.route('/notices/delete/<int:notice_id>', methods=['POST'])
@@ -588,25 +593,23 @@ def notice_delete(notice_id):
     if session.get('user') not in ADMIN_USERS:
         flash('관리자만 삭제할 수 있습니다.', 'error')
         return redirect(url_for('notices_list'))
-    db = get_db()
-    db.execute('DELETE FROM notices WHERE id = ?', (notice_id,))
-    db.commit()
-    db.close()
+
+    notice = Notice.query.get(notice_id)
+    if notice:
+        db_pg.session.delete(notice)
+        db_pg.session.commit()
+
     flash('공지사항이 삭제되었습니다.', 'success')
     return redirect(url_for('notices_list'))
 
 @app.route('/notices')
 def notices_list():
-    db = get_db()
-    notices = db.execute('SELECT * FROM notices ORDER BY id DESC').fetchall()
-    db.close()
+    notices = Notice.query.order_by(Notice.id.desc()).all()
     return render_template('notices.html', notices=notices)
 
 @app.route('/notices/<int:notice_id>')
 def notice_detail(notice_id):
-    db = get_db()
-    notice = db.execute('SELECT * FROM notices WHERE id = ?', (notice_id,)).fetchone()
-    db.close()
+    notice = Notice.query.get(notice_id)
     if not notice:
         return redirect(url_for('notices_list'))
     return render_template('notice_detail.html', notice=notice)
