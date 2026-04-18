@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Go - 작품 만들기</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="app-body">
+<div class="app-shell">
+
+    <div class="topbar">
+        <span>미리보기</span>
+        <span>⋯</span>
+    </div>
+
+    <div class="section-title">🎨 Create Go</div>
+
+    <div class="card">
+        <div class="field-row">
+            <input id="title" class="text-input field-grow" placeholder="제목">
+            <button class="primary-btn" onclick="submitPost()">시작</button>
+        </div>
+
+        <div class="profile-row">
+            👤 테스트
+            <span class="coin-badge">💰 1000</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title small">🎨 그림 그리기</div>
+
+        <div class="canvas-wrap">
+            <canvas id="canvas" width="360" height="360"></canvas>
+        </div>
+
+        <div class="toolbar">
+            <div class="tool-row">
+                <input type="text" id="content" class="text-input" placeholder="설명 입력">
+                <input type="range" id="size" class="range-input" min="1" max="20" value="4">
+            </div>
+
+            <div class="tool-actions">
+                <button id="eraserBtn" class="secondary-btn" onclick="toggleEraser()">지우개</button>
+                <button class="secondary-btn" onclick="undo()">되돌리기</button>
+                <button class="danger-btn" onclick="clearCanvas()">전체 지우기</button>
+            </div>
+
+            <button class="primary-btn" onclick="submitPost()">작품 등록</button>
+
+            <div class="color-palette">
+                <button type="button" class="color-btn active" onclick="setColor('#000000', this)">검정</button>
+                <button type="button" class="color-btn" onclick="setColor('#ff3b30', this)">빨강</button>
+                <button type="button" class="color-btn" onclick="setColor('#007aff', this)">파랑</button>
+                <button type="button" class="color-btn" onclick="setColor('#34c759', this)">초록</button>
+                <button type="button" class="color-btn" onclick="setColor('#ffd60a', this)">노랑</button>
+                <span class="color-empty"></span>
+                <button type="button" class="color-btn" onclick="setColor('#af52de', this)">보라</button>
+                <button type="button" class="color-btn white" onclick="setColor('#ffffff', this)">흰색</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const sizeInput = document.getElementById('size');
+const eraserBtn = document.getElementById('eraserBtn');
+let drawing = false;
+let brushSize = 4;
+let history = [];
+let eraser = false;
+let lastPoint = null;
+let currentColor = '#000000';
+
+ctx.fillStyle = '#ffffff';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+
+function getCanvasPoint(event) {
+    const rect = canvas.getBoundingClientRect();
+    const source = event.touches ? event.touches[0] : event;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    return {
+        x: (source.clientX - rect.left) * scaleX,
+        y: (source.clientY - rect.top) * scaleY,
+    };
+}
+
+function saveState() {
+    history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    if (history.length > 30) {
+        history.shift();
+    }
+}
+
+function startDrawing(event) {
+    event.preventDefault();
+    drawing = true;
+    saveState();
+    lastPoint = getCanvasPoint(event);
+    draw(event);
+}
+
+function draw(event) {
+    if (!drawing) return;
+    event.preventDefault();
+
+    const point = getCanvasPoint(event);
+    ctx.strokeStyle = eraser ? '#ffffff' : currentColor;
+    ctx.lineWidth = brushSize;
+
+    ctx.beginPath();
+    ctx.moveTo(lastPoint.x, lastPoint.y);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+
+    lastPoint = point;
+}
+
+function stopDrawing(event) {
+    if (event) event.preventDefault();
+    drawing = false;
+    lastPoint = null;
+}
+
+function clearCanvas() {
+    saveState();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function toggleEraser() {
+    eraser = !eraser;
+    eraserBtn.classList.toggle('active-tool', eraser);
+}
+
+function setColor(color, button) {
+    currentColor = color;
+    eraser = false;
+    eraserBtn.classList.remove('active-tool');
+    document.querySelectorAll('.color-btn').forEach((btn) => btn.classList.remove('active'));
+    button.classList.add('active');
+}
+
+function undo() {
+    if (history.length === 0) return;
+    const previous = history.pop();
+    ctx.putImageData(previous, 0, 0);
+}
+
+sizeInput.addEventListener('input', (event) => {
+    brushSize = Number(event.target.value);
+});
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('mouseleave', stopDrawing);
+canvas.addEventListener('touchstart', startDrawing, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+canvas.addEventListener('touchend', stopDrawing, { passive: false });
+canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+
+function submitPost() {
+    const data = new FormData();
+    data.append('title', document.getElementById('title').value);
+    data.append('content', document.getElementById('content').value);
+    data.append('image_data', canvas.toDataURL('image/png'));
+
+    fetch('/create-go/create', { method: 'POST', body: data })
+        .then((response) => response.json())
+        .then((result) => {
+            if (result.success) {
+                location.href = result.redirect;
+            } else {
+                alert(result.message);
+            }
+        })
+        .catch(() => {
+            alert('작품 등록 중 오류가 발생했습니다.');
+        });
+}
+</script>
+</body>
+</html>
