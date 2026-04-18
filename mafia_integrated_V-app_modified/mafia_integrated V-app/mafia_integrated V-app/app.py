@@ -403,6 +403,65 @@ def index():
         hero_animation=HERO_ANIMATION
     )
 
+@app.route('/create-go')
+def create_go_home():
+    return render_template('create_go.html')
+
+
+@app.route('/create-go/board')
+def create_go_board():
+    db = get_db()
+    posts = db.execute('SELECT * FROM posts ORDER BY id DESC').fetchall()
+    db.close()
+    return render_template('create_go_board.html', posts=posts)
+
+
+@app.route('/create-go/auction')
+def create_go_auction():
+    db = get_db()
+    posts = db.execute('SELECT * FROM posts ORDER BY id DESC').fetchall()
+    db.close()
+    return render_template('create_go_auction.html', posts=posts)
+
+
+@app.route('/create-go/create')
+def create_go_create():
+    return render_template('create_go_create.html')
+
+
+@app.route('/create-go/uploads/<filename>')
+def create_go_uploaded_file(filename):
+    return send_from_directory(CREATE_GO_UPLOAD_FOLDER, filename)
+
+
+@app.route('/create-go/create', methods=['POST'])
+def create_go_create_post():
+    title = request.form.get('title', '').strip()
+    content = request.form.get('content', '').strip()
+    image_data = request.form.get('image_data', '').strip()
+
+    if not title or not content or not image_data:
+        return jsonify({'success': False, 'message': '제목, 설명, 그림을 모두 입력해주세요.'}), 400
+
+    try:
+        image_filename = save_create_go_base64_image(image_data)
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'이미지 저장 실패: {str(e)}'}), 400
+
+    db = get_db()
+    db.execute(
+        'INSERT INTO posts (title, content, image_path) VALUES (?, ?, ?)',
+        (title, content, image_filename)
+    )
+    db.commit()
+    db.close()
+
+    return jsonify({
+        'success': True,
+        'message': '작품이 등록되었습니다.',
+        'redirect': url_for('create_go_board')
+    })
+
 @app.route('/ai-chat')
 def ai_chat():
     return render_template('ai_chat.html')
