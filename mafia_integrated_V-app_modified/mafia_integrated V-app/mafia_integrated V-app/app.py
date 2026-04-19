@@ -2467,6 +2467,8 @@ import os
 if __name__ == "__main__":
     init_db()
 
-    import os
+    with app.app_context():
+        db_pg.create_all()
+
     port = int(os.environ.get("PORT", 5000))
     socketio.run(app, host="0.0.0.0", port=port)
