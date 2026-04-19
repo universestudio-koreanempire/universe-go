@@ -635,39 +635,32 @@ def complaint_write():
     if request.method == 'POST':
         username = session.get('user', '비회원')
         category = request.form.get('category', '')
-        title    = request.form.get('title', '')
-        content  = request.form.get('content', '')
-        created  = datetime.now().strftime('%Y-%m-%d')
+        title = request.form.get('title', '')
+        content = request.form.get('content', '')
+        created = datetime.now().strftime('%Y-%m-%d')
 
         if not category or not title or not content:
             flash('모든 항목을 입력해주세요.', 'error')
             return render_template('complaint_write.html')
 
-        db = get_db()
-        db.execute(
-            'INSERT INTO complaints (username, category, title, content, created) VALUES (?, ?, ?, ?, ?)',
-            (username, category, title, content, created)
+        complaint = Complaint(
+            username=username,
+            category=category,
+            title=title,
+            content=content,
+            created=created
         )
-        db.commit()
-        db.close()
+        db_pg.session.add(complaint)
+        db_pg.session.commit()
 
         flash('민원이 성공적으로 접수되었습니다.', 'success')
         return redirect(url_for('complaint'))
+
     return render_template('complaint_write.html')
 
 @app.route('/complaint/board')
 def complaint_board():
-    import sqlite3
-
-    conn = sqlite3.connect('mafia_go.db')
-    conn.row_factory = sqlite3.Row  # ← 이거 중요
-    c = conn.cursor()
-
-    c.execute('SELECT * FROM complaints ORDER BY id DESC')
-    posts = c.fetchall()
-
-    conn.close()
-
+    posts = Complaint.query.order_by(Complaint.id.desc()).all()
     return render_template('board.html', posts=posts)
 
 @app.route('/privacy')
@@ -735,12 +728,7 @@ def admin_complaints():
         flash('관리자만 접근할 수 있습니다.', 'error')
         return redirect(url_for('index'))
 
-    db = get_db()
-    complaints = db.execute(
-        'SELECT * FROM complaints ORDER BY id DESC'
-    ).fetchall()
-    db.close()
-
+    complaints = Complaint.query.order_by(Complaint.id.desc()).all()
     return render_template('admin_complaints.html', complaints=complaints)
 
 @app.route('/admin/complaints/<int:complaint_id>/status', methods=['POST'])
@@ -757,48 +745,36 @@ def update_complaint_status(complaint_id):
     if new_status not in allowed_status:
         return redirect(url_for('admin_complaints'))
 
-    db = get_db()
+    current = Complaint.query.get(complaint_id)
 
-    # 현재 상태 확인 (처리 완료면 변경 불가)
-    current = db.execute(
-        'SELECT status FROM complaints WHERE id = ?',
-        (complaint_id,)
-    ).fetchone()
-
-    if current and current['status'] == '처리 완료':
-        db.close()
+    if not current:
         return redirect(url_for('admin_complaints'))
 
-    # 상태별 로직
+    if current.status == '처리 완료':
+        return redirect(url_for('admin_complaints'))
+
     if new_status == '담당자 배정':
         if not manager_name:
-            db.close()
             return redirect(url_for('admin_complaints'))
 
-        db.execute(
-            'UPDATE complaints SET status=?, manager_name=?, answer_content=NULL WHERE id=?',
-            (new_status, manager_name, complaint_id)
-        )
+        current.status = new_status
+        current.manager_name = manager_name
+        current.answer_content = None
 
     elif new_status == '처리 완료':
         if not manager_name or not answer_content:
-            db.close()
             return redirect(url_for('admin_complaints'))
 
-        db.execute(
-            'UPDATE complaints SET status=?, manager_name=?, answer_content=? WHERE id=?',
-            (new_status, manager_name, answer_content, complaint_id)
-        )
+        current.status = new_status
+        current.manager_name = manager_name
+        current.answer_content = answer_content
 
     elif new_status in ['신청 완료', '접수 완료', '처리 중지', '반려']:
-        db.execute(
-            'UPDATE complaints SET status=?, manager_name=NULL, answer_content=NULL WHERE id=?',
-            (new_status, complaint_id)
-        )
+        current.status = new_status
+        current.manager_name = None
+        current.answer_content = None
 
-    db.commit()
-    db.close()
-
+    db_pg.session.commit()
     return redirect(url_for('admin_complaints'))
 
 @app.route('/admin/complaints/<int:complaint_id>/delete', methods=['POST'])
@@ -806,10 +782,10 @@ def delete_complaint(complaint_id):
     if session.get('user') not in ADMIN_USERS:
         return redirect(url_for('index'))
 
-    db = get_db()
-    db.execute('DELETE FROM complaints WHERE id=?', (complaint_id,))
-    db.commit()
-    db.close()
+    complaint = Complaint.query.get(complaint_id)
+    if complaint:
+        db_pg.session.delete(complaint)
+        db_pg.session.commit()
 
     return redirect(url_for('admin_complaints'))
 
